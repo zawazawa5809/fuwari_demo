@@ -1,0 +1,292 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: rgb(59 130 246);
+  --color-secondary: rgb(6 182 212);
+  --transition-duration: 0.3s;
+  --header-height: 4rem;
+  --sidebar-width: 16rem;
+  --page-transition-duration: 300ms;
+
+  /* ホバー時の背景色を追加 */
+  --color-bg-hover: rgba(59, 130, 246, 0.1);
+
+  /* ミュートカラーの調整 */
+  --color-bg-muted: #f3f4f6;
+  --color-text-muted: #6b7280;
+
+  --mobile-nav-height: calc(100vh - var(--header-height));
+  --transition-timing: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+:root.dark {
+  --color-bg-hover: rgba(59, 130, 246, 0.2);
+  --color-bg-muted: rgba(55, 65, 81, 0.5);
+  --color-text-muted: #9ca3af;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+  }
+
+  ::selection {
+    background-color: rgb(var(--color-primary) / 0.2);
+    color: rgb(var(--color-primary));
+  }
+}
+
+.prose {
+  @apply max-w-none;
+}
+
+.prose pre {
+  @apply rounded-lg;
+}
+
+.prose code {
+  @apply rounded-md px-1 py-0.5 bg-gray-200 dark:bg-gray-800;
+}
+
+.prose pre code {
+  @apply bg-transparent p-0;
+}
+
+.prose img {
+  @apply rounded-lg;
+}
+
+.prose a {
+  @apply text-primary hover:underline;
+}
+
+@layer components {
+  .focus-ring {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary 
+    focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
+  }
+
+  .focus-ring-inset {
+    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-primary 
+    focus-visible:ring-inset dark:focus-visible:ring-offset-gray-900;
+  }
+
+  .link {
+    @apply text-primary hover:underline focus-ring rounded-sm;
+  }
+
+  .nav-link {
+    @apply text-gray-600 dark:text-gray-300 hover:text-primary dark:hover:text-primary
+    transition-colors focus:outline-none focus:ring-2 focus:ring-primary rounded-md px-2 py-1;
+  }
+
+  .button {
+    @apply inline-flex items-center justify-center px-4 py-2 border border-transparent
+    text-sm font-medium rounded-md shadow-sm text-white bg-primary-500
+    hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2
+    focus:ring-primary transition-colors;
+  }
+
+  /* モバイルメニューのスタイル */
+  .mobile-menu {
+    @apply fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 lg:hidden;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .mobile-menu.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mobile-menu-content {
+    @apply fixed top-0 right-0 h-full w-[280px] bg-white dark:bg-gray-800 shadow-xl;
+    transform: translateX(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .mobile-menu.open .mobile-menu-content {
+    transform: translateX(0);
+  }
+
+  .mobile-nav-link {
+    @apply block w-full text-left px-4 py-2 text-gray-700 dark:text-gray-300
+    hover:bg-gray-100 dark:hover:bg-gray-700
+    focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500
+    transition-colors duration-150;
+  }
+
+  /* スケルトンローディング */
+  .skeleton {
+    @apply animate-pulse bg-gray-200 dark:bg-gray-700 rounded;
+  }
+
+  .skeleton-text {
+    @apply h-4 bg-gray-200 dark:bg-gray-700 rounded;
+  }
+
+  .skeleton-image {
+    @apply bg-gray-200 dark:bg-gray-700 rounded-lg;
+  }
+
+  /* View Transitions アニメーション */
+  ::view-transition-old(root) {
+    animation: fade-out var(--transition-duration) var(--transition-timing) both;
+  }
+
+  ::view-transition-new(root) {
+    animation: fade-in var(--transition-duration) var(--transition-timing) both;
+  }
+
+  /* パーシステント要素のトランジション */
+  ::view-transition-old(persistent),
+  ::view-transition-new(persistent) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  /* アクセシビリティ対応 */
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --transition-duration: 0s;
+    }
+
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn var(--transition-duration) ease-out;
+  }
+
+  .animate-slide-up {
+    animation: slideUp var(--transition-duration) ease-out;
+  }
+
+  .optimize-gpu {
+    @apply transform-gpu will-change-transform;
+  }
+
+  .optimize-scroll {
+    @apply overscroll-contain;
+  }
+
+  /* 画像最適化 */
+  .image-rendering-opt {
+    image-rendering: optimizeQuality;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* アニメーション最適化 */
+  .animation-reduce {
+    @apply motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animate-none;
+  }
+}
+
+/* View Transitions アニメーション */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(page),
+::view-transition-new(page) {
+  animation-duration: var(--page-transition-duration);
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* スライドアニメーション */
+@keyframes slide-from-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-to-left {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+.slide-enter {
+  animation: slide-from-right var(--page-transition-duration)
+    cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide-exit {
+  animation: slide-to-left var(--page-transition-duration)
+    cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 画像の遅延ロード用スケルトン */
+.image-skeleton {
+  @apply bg-gray-200 dark:bg-gray-700 animate-pulse rounded-lg;
+}
+
+/* アクセシビリティ */
+.sr-only {
+  @apply absolute w-px h-px p-0 -m-px overflow-hidden whitespace-nowrap border-0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

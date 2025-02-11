@@ -1,0 +1,137 @@
+---
+
+---
+
+<button
+  id="themeToggle"
+  class="theme-toggle"
+  aria-label="テーマ切り替え"
+  title="テーマを切り替える (Systemの場合はOSの設定に従います)"
+>
+  <svg
+    class="sun-icon"
+    fill="currentColor"
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+  >
+    <path
+      d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+    ></path>
+  </svg>
+  <svg
+    class="moon-icon"
+    fill="currentColor"
+    viewBox="0 0 20 20"
+    aria-hidden="true"
+  >
+    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"
+    ></path>
+  </svg>
+</button>
+
+<style>
+  .theme-toggle {
+    @apply w-10 h-10 flex items-center justify-center rounded-lg
+    text-gray-500 dark:text-gray-400
+    hover:bg-gray-100 dark:hover:bg-gray-800
+    focus:outline-none focus:ring-2 focus:ring-primary
+    ring-offset-2 dark:ring-offset-gray-900
+    transition-all duration-200 ease-in-out;
+  }
+
+  .sun-icon {
+    @apply w-6 h-6 hidden dark:block transform transition-transform duration-300;
+  }
+
+  .moon-icon {
+    @apply w-6 h-6 block dark:hidden transform transition-transform duration-300;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .theme-toggle:hover .sun-icon {
+      @apply rotate-12;
+    }
+
+    .theme-toggle:hover .moon-icon {
+      @apply -rotate-12;
+    }
+
+    .theme-toggle:active {
+      @apply scale-95;
+    }
+  }
+</style>
+
+<script>
+  type Theme = "light" | "dark";
+
+  const theme = (() => {
+    if (typeof localStorage !== "undefined" && localStorage.getItem("theme")) {
+      const savedTheme = localStorage.getItem("theme");
+      return savedTheme === "light" || savedTheme === "dark"
+        ? savedTheme
+        : "light";
+    }
+    if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+      return "dark";
+    }
+    return "light";
+  })() as Theme;
+
+  function updateTheme(newTheme: Theme) {
+    const element = document.documentElement;
+    const isDark = newTheme === "dark";
+
+    element.classList.toggle("dark", isDark);
+    const themeToggle = document.getElementById("themeToggle");
+    if (themeToggle) {
+      themeToggle.setAttribute(
+        "aria-label",
+        `${isDark ? "ライト" : "ダーク"}モードに切り替え`
+      );
+    }
+  }
+
+  // 初期化時にテーマを設定
+  updateTheme(theme);
+
+  // View Transitions後のイベントハンドラ
+  document.addEventListener("astro:after-swap", () => {
+    const savedTheme = localStorage.getItem("theme");
+    const currentTheme =
+      savedTheme === "light" || savedTheme === "dark" ? savedTheme : theme;
+    updateTheme(currentTheme as Theme);
+  });
+
+  // トグルボタンのイベントハンドラを設定する関数
+  function setupToggleHandler() {
+    const themeToggle = document.getElementById("themeToggle");
+    if (themeToggle) {
+      themeToggle.addEventListener("click", () => {
+        const element = document.documentElement;
+        const isDark = element.classList.toggle("dark");
+        const newTheme = isDark ? "dark" : ("light" as Theme);
+
+        localStorage.setItem("theme", newTheme);
+        updateTheme(newTheme);
+
+        // アナウンス
+        const announcement = document.createElement("div");
+        announcement.setAttribute("role", "status");
+        announcement.setAttribute("aria-live", "polite");
+        announcement.classList.add("sr-only");
+        announcement.textContent = `${isDark ? "ダーク" : "ライト"}モードに切り替えました`;
+        document.body.appendChild(announcement);
+
+        // クリーンアップ
+        setTimeout(() => {
+          announcement.remove();
+        }, 3000);
+      });
+    }
+  }
+
+  // 初期化時とView Transitions後にトグルハンドラを設定
+  setupToggleHandler();
+  document.addEventListener("astro:after-swap", setupToggleHandler);
+</script>

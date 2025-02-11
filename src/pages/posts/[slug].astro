@@ -1,0 +1,26 @@
+---
+import { getCollection } from 'astro:content';
+import PostLayout from '../../layouts/PostLayout.astro';
+import { generateToc } from '../../utils/toc';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await post.render();
+
+const toc = headings.map(heading => ({
+  id: heading.slug,
+  text: heading.text,
+  depth: heading.depth
+}));
+---
+
+<PostLayout frontmatter={post.data} url={Astro.url.pathname} toc={toc}>
+  <Content />
+</PostLayout>

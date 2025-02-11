@@ -1,0 +1,30 @@
+---
+// propsを受け取る
+interface Props {
+  start: number;
+}
+
+const { start } = Astro.props;
+---
+
+<div class="counter">
+  <button class="btn" >
+    Increment
+  </button>
+  <span class="count">{start}</span>
+</div>
+
+<style>
+.counter {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.btn {
+  background-color: #eee;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+}
+</style>

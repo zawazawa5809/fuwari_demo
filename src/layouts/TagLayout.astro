@@ -1,0 +1,25 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import TimelineLayout from './TimelineLayout.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  tag: string;
+  posts: CollectionEntry<'posts'>[];
+}
+
+const { tag, posts } = Astro.props;
+---
+
+<BaseLayout title={`Tag: ${tag}`}>
+  <h1 class="tag-title">Posts tagged with "{tag}"</h1>
+  <TimelineLayout posts={posts} />
+</BaseLayout>
+
+<style>
+  .tag-title {
+    margin: 2rem 0;
+    font-size: 2rem;
+    color: var(--color-text);
+  }
+</style>

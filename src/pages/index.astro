@@ -1,0 +1,25 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostList from '../components/PostList.astro';
+import ReactCounter from '../components/ReactCounter';
+
+const posts = await getCollection('posts');
+const sortedPosts = posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+---
+
+<BaseLayout isHome={true}>
+  <section>
+    <h1 class="sr-only">Blog Posts</h1>
+    <PostList posts={posts} />
+    <div class="counter-container">
+      <ReactCounter start={0} client:visible />
+    </div>
+  </section>
+</BaseLayout>
+
+<style>
+  .counter-container {
+    margin-top: 2rem;
+  }
+</style>

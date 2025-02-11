@@ -1,0 +1,54 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+export interface Props {
+  frontmatter: {
+    title: string;
+    description: string;
+    image?: string;
+    tags: string[];
+  };
+  url: string;
+  toc?: { id: string; text: string;}[];
+}
+
+const { frontmatter, url, toc } = Astro.props;
+const { title, description, image, tags } = frontmatter;
+---
+
+<BaseLayout title={title} description={description} image={image} toc={toc}>
+  <article class="prose dark:prose-invert">
+    <slot />
+  </article>
+</BaseLayout>
+
+<style>
+  article {
+    max-width: 65ch;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  :global(.prose) {
+    font-size: 1.125rem;
+    line-height: 1.75;
+  }
+
+  :global(.prose h1) {
+    font-size: 2.25rem;
+    margin-top: 0;
+    margin-bottom: 2rem;
+  }
+
+  :global(.prose h2) {
+    font-size: 1.8rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  :global(.prose h3) {
+    font-size: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+  }
+</style>

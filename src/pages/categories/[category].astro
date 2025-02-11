@@ -1,0 +1,30 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TimelineLayout from '../../layouts/TimelineLayout.astro';
+
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+  const categories = [...new Set(posts.map(post => post.data.category).filter(Boolean))];
+
+  return categories.map(category => ({
+    params: { category: category.toLowerCase() },
+    props: {
+      posts: posts
+        .filter(post => !post.data.draft)
+        .filter(post => post.data.category?.toLowerCase() === category.toLowerCase())
+        .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
+      originalCategory: category,
+    },
+  }));
+}
+
+const { category } = Astro.params;
+const { posts, originalCategory } = Astro.props;
+---
+
+<BaseLayout title={`Category: ${originalCategory}`} description={`Posts in category ${originalCategory}`}>
+  <TimelineLayout posts={posts} title={`Category: ${originalCategory}`} />
+</BaseLayout> 

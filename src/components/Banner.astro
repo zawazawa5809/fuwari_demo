@@ -1,0 +1,69 @@
+---
+import { Image } from "astro:assets";
+import { BANNER_CONFIG } from "../config";
+
+interface Props {
+  isHome?: boolean;
+}
+
+const { isHome = false } = Astro.props;
+---
+
+<div class="banner-container">
+  {
+    BANNER_CONFIG.style === "image" ? (
+      <div class="relative h-[300px] md:h-[400px]">
+        <div class="skeleton-image absolute inset-0" />
+        <Image
+          src={BANNER_CONFIG.image}
+          alt=""
+          width={1920}
+          height={400}
+          class="w-full h-full object-cover"
+          loading={isHome ? "eager" : "lazy"}
+          decoding={isHome ? "sync" : "async"}
+          format="webp"
+          quality={80}
+        />
+        {isHome && (
+          <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+            <h1 class="text-4xl md:text-5xl text-white font-display font-bold text-center px-4">
+              Welcome to My Blog
+            </h1>
+          </div>
+        )}
+      </div>
+    ) : (
+      <div
+        class="h-[300px] md:h-[400px] bg-gradient-to-r"
+        style={`--tw-gradient-from: ${BANNER_CONFIG.gradient.from}; --tw-gradient-to: ${BANNER_CONFIG.gradient.to};`}
+      >
+        {isHome && (
+          <div class="h-full flex items-center justify-center">
+            <h1 class="text-4xl md:text-5xl text-white font-display font-bold text-center px-4">
+              Welcome to My Blog
+            </h1>
+          </div>
+        )}
+      </div>
+    )
+  }
+</div>
+
+<style>
+  .banner-container {
+    view-transition-name: banner;
+    transform-origin: top;
+    overflow: hidden;
+  }
+
+  .skeleton-image {
+    @apply bg-gray-200 dark:bg-gray-700 animate-pulse;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-image {
+      animation: none;
+    }
+  }
+</style>

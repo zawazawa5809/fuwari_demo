@@ -1,0 +1,88 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TimelineItem from '../../components/TimelineItem.astro';
+import { getCollection } from 'astro:content';
+
+// シンプルな日付フォーマット関数
+function formatDate(dateStr: string) {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return '';
+  
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}/${month}/${day}`;
+}
+
+const posts = await getCollection('posts');
+const tags = posts.reduce((acc, post) => {
+  post.data.tags?.forEach(tag => {
+    if (!acc[tag]) {
+      acc[tag] = [];
+    }
+    acc[tag].push(post);
+  });
+  return acc;
+}, {} as Record<string, any[]>);
+
+// タグを記事数順にソート
+const sortedTags = Object.entries(tags)
+  .sort(([, a], [, b]) => b.length - a.length);
+---
+
+<BaseLayout title="Tags">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold text-center mb-8 text-slate-900 dark:text-slate-100">Tags</h1>
+    <div class="border-l-2 border-slate-200 dark:border-slate-800">
+      {sortedTags.map(([tag, posts]) => (
+        <TimelineItem title={`#${tag}`} count={posts.length}>
+          <div class="space-y-3">
+            {posts
+              .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
+              .map(post => (
+              <div class="flex gap-x-3 relative">
+                <time class="text-sm text-slate-500 dark:text-slate-400 w-20 shrink-0">
+                  {formatDate(post.data.date)}
+                </time>
+                <a href={`/posts/${post.slug}`} 
+                   class="text-slate-800 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400">
+                  {post.data.title}
+                </a>
+              </div>
+            ))}
+          </div>
+        </TimelineItem>
+      ))}
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  /* categories/index.astroと同じスタイル */
+  h1 {
+    margin: 2rem 0;
+    font-size: 2rem;
+    color: var(--color-text);
+  }
+
+  .tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .tag {
+    padding: 0.5rem 1rem;
+    background: var(--color-card);
+    border-radius: var(--radius-base);
+    color: var(--color-text);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .tag:hover {
+    background: var(--color-primary);
+    color: var(--color-bg);
+  }
+</style>

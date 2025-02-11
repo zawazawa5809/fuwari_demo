@@ -1,0 +1,20 @@
+---
+interface Props {
+  category: string;
+}
+
+const { category } = Astro.props;
+---
+
+<span class="category-label">{category}</span>
+
+<style>
+  .category-label {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background-color: #28a745; /* Example green color */
+    color: white;
+    border-radius: 0.25rem; /* Slightly smaller border-radius */
+    font-size: 0.75rem;
+  }
+</style>

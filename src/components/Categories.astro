@@ -1,0 +1,44 @@
+---
+import { getCollection } from 'astro:content';
+
+// 全記事を取得
+const posts = await getCollection('posts');
+
+// カテゴリーの集計
+const categoryCount = posts.reduce((acc, post) => {
+  const category = post.data.category;
+  if (!acc[category]) {
+    acc[category] = 0;
+  }
+  acc[category]++;
+  return acc;
+}, {} as Record<string, number>);
+
+// カテゴリーを記事数順にソート
+const categories = Object.entries(categoryCount)
+  .map(([name, count]) => ({
+    name,
+    count,
+    slug: name.toLowerCase().replace(/\s+/g, '-')
+  }))
+  .sort((a, b) => b.count - a.count);
+---
+
+<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
+  <h2 class="text-lg font-semibold mb-4">Categories</h2>
+  <ul class="space-y-2">
+    {categories.map(category => (
+      <li class="flex justify-between items-center">
+        <a
+          href={`/categories/${category.slug}`}
+          class="text-gray-700 dark:text-gray-300 hover:text-primary"
+        >
+          {category.name}
+        </a>
+        <span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 text-sm px-2 py-0.5 rounded">
+          {category.count}
+        </span>
+      </li>
+    ))}
+  </ul>
+</div>

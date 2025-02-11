@@ -1,0 +1,40 @@
+---
+const { posts } = Astro.props;
+
+const categories = [...new Set(posts.map(post => post.data.category).filter(Boolean))];
+const categoryCounts = categories.reduce((acc, category) => {
+  acc[category] = posts.filter(post => post.data.category === category).length;
+  return acc;
+}, {});
+---
+
+<div class="mb-8">
+  <h2 class="text-lg font-semibold mb-4">Categories</h2>
+  <ul class="space-y-2">
+    {categories.map(category => (
+      <li>
+        <a
+          href={`/categories/${category.toLowerCase()}`}
+          class="flex items-center justify-between text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary"
+        >
+          <span>{category}</span>
+          <span class="text-sm text-gray-500 dark:text-gray-500">{categoryCounts[category]}</span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</div>
+
+<script>
+  // カテゴリーリンクのホバーエフェクトを強化
+  const categoryLinks = document.querySelectorAll('a[href^="/categories/"]');
+  categoryLinks.forEach(link => {
+    link.addEventListener('mouseenter', () => {
+      link.classList.add('scale-105');
+      link.style.transition = 'transform 0.2s ease-in-out';
+    });
+    link.addEventListener('mouseleave', () => {
+      link.classList.remove('scale-105');
+    });
+  });
+</script> 

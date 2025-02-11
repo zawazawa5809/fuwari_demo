@@ -1,0 +1,113 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { Image } from "astro:assets";
+import BaseLayout from "./BaseLayout.astro";
+import FormattedDate from "../components/FormattedDate.astro";
+
+type Props = CollectionEntry<"posts">["data"];
+
+const { title, description, pubDate, updatedDate, heroImage, tags } =
+  Astro.props;
+---
+
+<BaseLayout title={title} description={description} image={heroImage}>
+  <article class="prose dark:prose-invert max-w-none">
+    <div class="mb-8">
+      {
+        heroImage && (
+          <div class="aspect-video relative rounded-lg overflow-hidden shadow-lg">
+            <div class="skeleton-image absolute inset-0" />
+            <Image
+              src={heroImage}
+              alt=""
+              width={1200}
+              height={675}
+              class="object-cover w-full h-full"
+              loading="eager"
+              decoding="async"
+              format="webp"
+              quality={80}
+            />
+          </div>
+        )
+      }
+      <h1
+        class="text-display-2 mt-8 mb-4 text-gray-900 dark:text-white optimize-gpu"
+        transition:name={`title-${title}`}
+      >
+        {title}
+      </h1>
+      <div class="flex flex-wrap gap-2 mb-4">
+        {
+          tags.map((tag) => (
+            <a
+              href={`/tags/${tag}`}
+              class="text-sm bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 
+                rounded-full px-3 py-1 hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
+              transition:name={`tag-${tag}`}
+            >
+              #{tag}
+            </a>
+          ))
+        }
+      </div>
+      <div class="flex gap-2 text-gray-600 dark:text-gray-400">
+        <FormattedDate date={pubDate} />
+        {
+          updatedDate && (
+            <div>
+              {" "}
+              (更新日: <FormattedDate date={updatedDate} />)
+            </div>
+          )
+        }
+      </div>
+    </div>
+    <div class="prose-content optimize-gpu">
+      <slot />
+    </div>
+  </article>
+</BaseLayout>
+
+<style>
+  .prose-content {
+    @apply max-w-none 
+    prose-headings:text-gray-900 dark:prose-headings:text-white
+    prose-headings:scroll-mt-20 prose-headings:font-display
+    prose-a:text-primary-600 dark:prose-a:text-primary-400 
+    prose-a:no-underline hover:prose-a:underline
+    prose-img:rounded-lg prose-img:shadow-lg
+    prose-pre:bg-gray-900 dark:prose-pre:bg-gray-800
+    prose-code:text-primary-600 dark:prose-code:text-primary-400
+    prose-strong:text-gray-900 dark:prose-strong:text-white;
+  }
+
+  /* パフォーマンス最適化 */
+  .skeleton-image {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
+
+  /* アクセシビリティ改善 */
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-image {
+      animation: none;
+    }
+  }
+
+  /* 印刷時のスタイル */
+  @media print {
+    .prose-content {
+      @apply max-w-none text-black;
+    }
+  }
+</style>

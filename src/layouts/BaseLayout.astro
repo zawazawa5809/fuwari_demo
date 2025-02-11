@@ -1,0 +1,409 @@
+---
+import { SITE_CONFIG, PROFILE_CONFIG } from "../config";
+import { ViewTransitions } from "astro:transitions";
+import Header from "../components/Header.astro";
+import Banner from "../components/Banner.astro";
+import Sidebar from "../components/Sidebar.astro";
+import SidebarNav from "../components/SidebarNav.astro";
+import "../styles/global.css";
+
+interface Props {
+  title?: string;
+  description?: string;
+  image?: string;
+  isHome?: boolean;
+  toc?: { id: string; text: string; depth?: number }[];
+}
+
+const {
+  title = SITE_CONFIG.title,
+  description = SITE_CONFIG.description,
+  image = SITE_CONFIG.ogImage,
+  isHome = false,
+  toc,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={SITE_CONFIG.lang} class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={image} />
+    <link
+      rel="preload"
+      href={PROFILE_CONFIG.avatar}
+      as="image"
+      fetchpriority="high"
+    />
+    <ViewTransitions fallback="none" />
+  </head>
+  <body class="antialiased">
+    <div class="flex flex-col min-h-screen">
+      <Header transition:persist="header" />
+      <Banner isHome={isHome} transition:persist="banner" />
+
+      <main class="flex-1" transition:animate="slide">
+        <div class="container">
+          <div class="sidebar left-sidebar" transition:persist="sidebar">
+            <SidebarNav />
+          </div>
+
+          <div class="main-content optimize-gpu" transition:animate="fade">
+            <slot />
+          </div>
+
+          {
+            Astro.url.pathname.startsWith("/posts/") && toc && (
+              <div class="sidebar right-sidebar" transition:persist="toc">
+                <div class="toc-content optimize-scroll">
+                  <h2 class="toc-title">目次</h2>
+                  <ul class="toc-list">
+                    {toc.map((item) => (
+                      <li class={`depth-${item.depth}`}>
+                        <a href={`#${item.id}`}>{item.text}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )
+          }
+        </div>
+      </main>
+
+      <footer
+        class="bg-gray-50 dark:bg-gray-800/50 py-8"
+        transition:persist="footer"
+      >
+        <div
+          class="max-w-6xl mx-auto px-4 text-center text-gray-600 dark:text-gray-400"
+        >
+          <p>&copy; {new Date().getFullYear()} {SITE_CONFIG.title}</p>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>
+
+<script>
+  document.addEventListener("astro:page-load", () => {
+    const banner = document.querySelector(".banner-container") as HTMLElement;
+    if (banner) {
+      const targetHeight = banner.querySelector("div")?.offsetHeight || 200;
+      banner.style.setProperty("height", `${targetHeight}px`);
+    }
+  });
+
+  document.addEventListener("astro:before-preparation", (e) => {
+    const event = e as App.BeforePreparationEvent;
+    const elements = [
+      "header",
+      ".banner-container",
+      ".left-sidebar",
+      ".right-sidebar",
+      "footer",
+    ].map((selector) => document.querySelector(selector));
+
+    elements.forEach((el) => {
+      if (el) event.persist(el);
+    });
+  });
+
+  document.addEventListener("astro:after-navigation", () => {
+    const main = document.querySelector("main") as HTMLElement;
+    if (main) {
+      main.tabIndex = -1;
+      main.focus({ preventScroll: true });
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: document.querySelector("[data-astro-transition]")
+        ? "auto"
+        : "smooth",
+    });
+  });
+
+  document.addEventListener("astro:page-load", () => {
+    // バナーの高さを動的に設定
+    const banner = document.querySelector(".banner-container") as HTMLElement;
+    if (banner) {
+      const targetHeight = banner.querySelector("div")?.offsetHeight || 200;
+      banner.style.setProperty("height", `${targetHeight}px`);
+    }
+
+    // 画像の遅延ロード
+    if ("loading" in HTMLImageElement.prototype) {
+      document
+        .querySelectorAll<HTMLImageElement>("img[loading='lazy']")
+        .forEach((img) => {
+          if (img.dataset.src) {
+            img.src = img.dataset.src;
+          }
+        });
+    }
+  });
+</script>
+
+<style>
+  /* バナーのトランジション用スタイル */
+  .banner-container {
+    view-transition-name: banner;
+    position: relative;
+    transform-origin: top;
+    overflow: hidden;
+  }
+
+  /* メインコンテンツは固定表示 */
+  main {
+    view-transition-name: none;
+  }
+
+  /* トランジション時のスタイル */
+  ::view-transition-old(banner),
+  ::view-transition-new(banner) {
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    animation: none;
+  }
+
+  ::view-transition-group(banner) {
+    animation: none;
+  }
+
+  .container {
+    display: grid;
+    grid-template-columns: 240px minmax(auto, 100ch) 240px;
+    gap: 3rem;
+    max-width: 90rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+    background-color: var(--color-card);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+  }
+
+  .left-sidebar .sidebar-content {
+    padding: 1.5rem;
+  }
+
+  .profile-image {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    display: block;
+  }
+
+  .nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .nav-links a {
+    color: var(--color-text);
+    text-decoration: none;
+    padding: 0.5rem 0;
+  }
+
+  .right-sidebar .toc-content {
+    padding: 1.5rem;
+    border-left: 2px solid var(--color-border, #e2e8f0);
+  }
+
+  .toc-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+  }
+
+  .toc-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  .toc-list li {
+    margin: 0.5rem 0;
+  }
+
+  .toc-list a {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .toc-list a:hover {
+    color: var(--color-primary);
+  }
+
+  .depth-2 {
+    padding-left: 0;
+  }
+  .depth-3 {
+    padding-left: 1rem;
+  }
+  .depth-4 {
+    padding-left: 2rem;
+  }
+
+  @media (max-width: 1200px) {
+    .container {
+      grid-template-columns: 200px minmax(auto, 100ch) 200px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+      display: none;
+    }
+  }
+
+  /* アニメーション定義 */
+  @keyframes slideFromRight {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideFromLeft {
+    from {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* View Transitions のカスタマイズ */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  /* パーシステントな要素のスタイル */
+  header,
+  .banner-container,
+  .left-sidebar,
+  .right-sidebar,
+  footer {
+    view-transition-name: persistent;
+  }
+
+  /* メインコンテンツのトランジション */
+  .main-content {
+    view-transition-name: main;
+  }
+
+  /* レイアウト */
+  .container {
+    display: grid;
+    grid-template-columns: 240px minmax(auto, 100ch) 240px;
+    gap: 3rem;
+    max-width: 90rem;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+  }
+
+  /* レスポンシブデザイン */
+  @media (max-width: 1200px) {
+    .container {
+      grid-template-columns: 200px minmax(auto, 100ch) 200px;
+      gap: 2rem;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .container {
+      grid-template-columns: 200px 1fr;
+    }
+    .right-sidebar {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      grid-template-columns: 1fr;
+      padding: 1rem;
+    }
+    .left-sidebar {
+      display: none;
+    }
+  }
+
+  /* サイドバーのスタイル */
+  .sidebar {
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+    background-color: var(--color-card);
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    transition: transform 0.3s ease;
+  }
+
+  /* アクセシビリティとパフォーマンス最適化 */
+  .optimize-gpu {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  .optimize-scroll {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .container,
+    .main-content,
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+</style>

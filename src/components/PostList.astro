@@ -1,0 +1,84 @@
+---
+import { Image } from "astro:assets";
+import FormattedDate from "./FormattedDate.astro";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  posts: CollectionEntry<"posts">[];
+}
+
+const { posts } = Astro.props;
+---
+
+<ul class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+  {
+    posts.map((post) => (
+      <li class="group">
+        <a href={`/posts/${post.slug}/`} class="block">
+          <article class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-transform duration-300 hover:-translate-y-1">
+            {post.data.heroImage && (
+              <div class="aspect-video relative">
+                <div class="skeleton-image absolute inset-0" />
+                <Image
+                  src={post.data.heroImage}
+                  alt=""
+                  width={600}
+                  height={338}
+                  class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                  decoding="async"
+                  format="webp"
+                  quality={60}
+                />
+              </div>
+            )}
+            <div class="p-4">
+              <h2
+                class="text-xl font-bold mb-2 text-gray-900 dark:text-white line-clamp-2 group-hover:text-primary transition-colors"
+                transition:name={`title-${post.data.title}`}
+              >
+                {post.data.title}
+              </h2>
+              {post.data.description && (
+                <p class="text-gray-600 dark:text-gray-300 text-sm line-clamp-3 mb-4">
+                  {post.data.description}
+                </p>
+              )}
+              <div class="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+                <FormattedDate date={post.data.pubDate} />
+                {post.data.category && (
+                  <span
+                    class="bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 
+                    rounded-full px-2 py-1 text-xs"
+                  >
+                    {post.data.category}
+                  </span>
+                )}
+              </div>
+            </div>
+          </article>
+        </a>
+      </li>
+    ))
+  }
+</ul>
+
+<style>
+  .skeleton-image {
+    @apply bg-gray-200 dark:bg-gray-700 animate-pulse;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton-image {
+      animation: none;
+    }
+
+    .group:hover article {
+      transform: none;
+    }
+
+    .group:hover img {
+      transform: none;
+    }
+  }
+</style>

@@ -1,0 +1,38 @@
+---
+const { posts } = Astro.props;
+
+const tags = [...new Set(posts.flatMap(post => post.data.tags))];
+const tagCounts = tags.reduce((acc, tag) => {
+  acc[tag] = posts.filter(post => post.data.tags.includes(tag)).length;
+  return acc;
+}, {});
+---
+
+<div>
+  <h2 class="text-lg font-semibold mb-4">Tags</h2>
+  <div class="flex flex-wrap gap-2">
+    {tags.map(tag => (
+      <a
+        href={`/tags/${tag.toLowerCase()}`}
+        class="inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+      >
+        <span class="text-gray-700 dark:text-gray-300">#{tag}</span>
+        <span class="ml-2 text-gray-500 dark:text-gray-500">{tagCounts[tag]}</span>
+      </a>
+    ))}
+  </div>
+</div>
+
+<script>
+  // タグのホバーエフェクトを強化
+  const tagLinks = document.querySelectorAll('a[href^="/tags/"]');
+  tagLinks.forEach(link => {
+    link.addEventListener('mouseenter', () => {
+      link.classList.add('scale-105');
+      link.style.transition = 'transform 0.2s ease-in-out';
+    });
+    link.addEventListener('mouseleave', () => {
+      link.classList.remove('scale-105');
+    });
+  });
+</script> 
