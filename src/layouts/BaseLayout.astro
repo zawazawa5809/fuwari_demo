@@ -102,7 +102,7 @@ const {
   });
 
   document.addEventListener("astro:before-preparation", (e) => {
-    const event = e as App.BeforePreparationEvent;
+    const event = e as unknown as App.BeforePreparationEvent;
     const elements = [
       "header",
       ".banner-container",
@@ -155,9 +155,7 @@ const {
 <style>
   /* バナーのトランジション用スタイル */
   .banner-container {
-    view-transition-name: banner;
     position: relative;
-    transform-origin: top;
     overflow: hidden;
   }
 
@@ -325,7 +323,6 @@ const {
 
   /* パーシステントな要素のスタイル */
   header,
-  .banner-container,
   .left-sidebar,
   .right-sidebar,
   footer {

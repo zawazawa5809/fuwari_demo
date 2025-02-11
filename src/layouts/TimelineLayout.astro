@@ -24,65 +24,172 @@ const years = Object.keys(postsByYear)
   .sort((a, b) => b - a);
 ---
 
-<div class="timeline-container">
+<div class="timeline-container" id="timeline-container">
   {
     years.map((year) => (
-      <div class="year-section" transition:animate="slide">
+      <div class="year-section" data-year={year}>
         <div class="year-label">{year}</div>
+        <div class="timeline-items">
+          {postsByYear[year].map((post) => (
+            <div
+              class="timeline-item group"
+              data-category={post.data.category?.toLowerCase() || ""}
+              data-tags={
+                post.data.tags?.map((tag) => tag.toLowerCase()).join(",") || ""
+              }
+            >
+              <div class="timeline-stem" />
+              <div class="timeline-dot" />
 
-        {postsByYear[year].map((post) => (
-          <div class="timeline-item">
-            <div class="timeline-stem" />
-            <div class="timeline-dot" />
+              <div class="timeline-content">
+                <time class="timeline-date">
+                  <FormattedDate date={post.data.pubDate} />
+                </time>
 
-            <div class="timeline-content">
-              <time class="timeline-date">
-                <FormattedDate date={post.data.pubDate} />
-              </time>
+                <div class="timeline-card">
+                  <div class="flex items-center gap-2 mb-2">
+                    {post.data.category && (
+                      <CategoryLabel category={post.data.category} />
+                    )}
+                  </div>
 
-              <div class="timeline-card">
-                <div class="flex items-center gap-2 mb-2">
-                  {post.data.category && (
-                    <CategoryLabel category={post.data.category} />
+                  <h3 class="timeline-title">
+                    <a
+                      href={`/posts/${post.slug}/`}
+                      transition:name={`title-${post.slug}`}
+                    >
+                      {post.data.title}
+                    </a>
+                  </h3>
+
+                  {post.data.description && (
+                    <p class="timeline-description">{post.data.description}</p>
                   )}
                 </div>
-
-                <h3 class="timeline-title">
-                  <a
-                    href={`/posts/${post.slug}/`}
-                    transition:name={`title-${post.slug}`}
-                  >
-                    {post.data.title}
-                  </a>
-                </h3>
-
-                {post.data.description && (
-                  <p class="timeline-description">{post.data.description}</p>
-                )}
               </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     ))
   }
 </div>
 
+<script>
+  interface TimelineItem extends HTMLElement {
+    dataset: {
+      category: string;
+      tags: string;
+    };
+  }
+
+  let currentFilter = "";
+  let isFiltering = false;
+
+  function filterTimelineItems(filter: string) {
+    if (isFiltering) return;
+    isFiltering = true;
+
+    const items = document.querySelectorAll<TimelineItem>(".timeline-item");
+    const sections = document.querySelectorAll<HTMLElement>(".year-section");
+
+    requestAnimationFrame(() => {
+      if (!filter) {
+        items.forEach((item) => {
+          item.style.display = "";
+          item.style.opacity = "1";
+        });
+        sections.forEach((section) => {
+          section.style.display = "";
+          section.style.opacity = "1";
+        });
+        isFiltering = false;
+        return;
+      }
+
+      items.forEach((item) => {
+        const category = item.dataset.category;
+        const tags = item.dataset.tags.split(",").filter(Boolean);
+        const normalizedFilter = filter.toLowerCase();
+
+        const shouldShow =
+          filter === "" ||
+          category.toLowerCase() === normalizedFilter ||
+          tags.includes(normalizedFilter);
+
+        if (shouldShow) {
+          item.style.display = "";
+          item.style.opacity = "0";
+          requestAnimationFrame(() => {
+            item.style.transition = "opacity 0.3s ease-in-out";
+            item.style.opacity = "1";
+          });
+        } else {
+          item.style.display = "none";
+        }
+      });
+
+      // Update year sections visibility
+      sections.forEach((section) => {
+        const hasVisibleItems = Array.from(
+          section.querySelectorAll(".timeline-item")
+        ).some((item) => (item as HTMLElement).style.display !== "none");
+
+        if (hasVisibleItems) {
+          section.style.display = "";
+          section.style.opacity = "1";
+        } else {
+          section.style.opacity = "0";
+          setTimeout(() => {
+            if (!hasVisibleItems) {
+              section.style.display = "none";
+            }
+          }, 300);
+        }
+      });
+
+      isFiltering = false;
+    });
+  }
+
+  function handleFilterChange(newFilter: string) {
+    if (newFilter !== currentFilter) {
+      currentFilter = newFilter;
+      filterTimelineItems(newFilter);
+    }
+  }
+
+  // Initial load and hash change handlers
+  window.addEventListener("load", () => {
+    const hash = window.location.hash.slice(1).toLowerCase();
+    handleFilterChange(hash);
+  });
+
+  window.addEventListener("hashchange", () => {
+    const hash = window.location.hash.slice(1).toLowerCase();
+    handleFilterChange(hash);
+  });
+
+  // Custom event handler for timeline filtering
+  window.addEventListener("timelineFilter", ((e: CustomEvent) => {
+    handleFilterChange(e.detail.filter);
+  }) as EventListener);
+</script>
+
 <style>
   .timeline-container {
     @apply relative w-full max-w-3xl mx-auto;
+    min-height: 200px;
   }
 
   .year-section {
     @apply relative pl-8 sm:pl-32 py-6;
-  }
-
-  .year-label {
-    @apply font-bold text-2xl text-primary-500 mb-8;
+    transition: opacity 0.3s ease-in-out;
   }
 
   .timeline-item {
-    @apply mb-8 last:mb-0;
+    @apply relative mb-8 last:mb-0;
+    transition: opacity 0.3s ease-in-out;
   }
 
   .timeline-stem {
@@ -152,5 +259,9 @@ const years = Object.keys(postsByYear)
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  .hidden {
+    display: none !important;
   }
 </style>

@@ -3,6 +3,7 @@ title: "Simple Guides for Fuwari"
 description: "Fuwariブログテンプレートの基本的な使い方ガイド"
 pubDate: 2024-04-01
 heroImage: "/images/banner.jpg"
+category: "Examples"
 tags: ["fuwari", "blogging", "customization"]
 ---
 

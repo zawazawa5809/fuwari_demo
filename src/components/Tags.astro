@@ -1,26 +1,29 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection } from "astro:content";
 
 // 全記事を取得
-const posts = await getCollection('posts');
+const posts = await getCollection("posts");
 
 // タグの集計
-const tagCount = posts.reduce((acc, post) => {
-  post.data.tags.forEach(tag => {
-    if (!acc[tag]) {
-      acc[tag] = 0;
-    }
-    acc[tag]++;
-  });
-  return acc;
-}, {} as Record<string, number>);
+const tagCount = posts.reduce(
+  (acc, post) => {
+    post.data.tags?.forEach((tag) => {
+      if (!acc[tag]) {
+        acc[tag] = 0;
+      }
+      acc[tag]++;
+    });
+    return acc;
+  },
+  {} as Record<string, number>
+);
 
 // タグを記事数順にソート
 const tags = Object.entries(tagCount)
   .map(([name, count]) => ({
     name,
     count,
-    slug: name.toLowerCase().replace(/\s+/g, '-')
+    slug: name.toLowerCase().replace(/\s+/g, "-"),
   }))
   .sort((a, b) => b.count - a.count);
 ---
@@ -28,14 +31,33 @@ const tags = Object.entries(tagCount)
 <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
   <h2 class="text-lg font-semibold mb-4">Tags</h2>
   <div class="flex flex-wrap gap-2">
-    {tags.map(tag => (
-      <a
-        href={`/tags/${tag.slug}`}
-        class="text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full px-3 py-1 hover:bg-gray-200 dark:hover:bg-gray-600"
-      >
-        #{tag.name}
-        <span class="text-gray-500 dark:text-gray-400 ml-1">({tag.count})</span>
-      </a>
-    ))}
+    {
+      tags.map((tag) => (
+        <a
+          href={`/tags/#${tag.slug}`}
+          class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+        >
+          <span class="text-gray-700 dark:text-gray-300">#{tag.name}</span>
+          <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">
+            ({tag.count})
+          </span>
+        </a>
+      ))
+    }
   </div>
 </div>
+
+<script>
+  // スムーズなスクロール処理の追加
+  document.querySelectorAll('a[href^="/tags/#"]').forEach((anchor) => {
+    anchor.addEventListener("click", (e) => {
+      const href = (e.currentTarget as HTMLAnchorElement).getAttribute("href");
+      if (href) {
+        const hash = href.split("#")[1];
+        window.history.pushState(null, "", `/tags/#${hash}`);
+        window.dispatchEvent(new HashChangeEvent("hashchange"));
+        e.preventDefault();
+      }
+    });
+  });
+</script>

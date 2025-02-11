@@ -1,24 +1,30 @@
 ---
-import { getCollection } from 'astro:content';
-import TagLayout from '../../layouts/TagLayout.astro';
+import { getCollection } from "astro:content";
+import TagLayout from "../../layouts/TagLayout.astro";
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts');
+  const posts = await getCollection("posts");
   // タグを小文字に正規化して重複を除去
-  const tags = [...new Set(posts.map(post => 
-    post.data.tags.map(tag => tag.toLowerCase())
-  ).flat())];
-  
-  return tags.map(tag => ({
-    params: { tag },
-    props: { 
-      posts: posts.filter(post => 
-        post.data.tags.map(t => t.toLowerCase()).includes(tag)
+  const tags = [
+    ...new Set(
+      posts.flatMap((post) => post.data.tags.map((tag) => tag.toLowerCase()))
+    ),
+  ];
+
+  return tags.map((normalizedTag) => ({
+    params: { tag: normalizedTag },
+    props: {
+      posts: posts.filter((post) =>
+        post.data.tags.map((t) => t.toLowerCase()).includes(normalizedTag)
       ),
-      // 元のタグ名（表示用）を探す
-      originalTag: posts.find(post => 
-        post.data.tags.map(t => t.toLowerCase()).includes(tag)
-      )?.data.tags.find(t => t.toLowerCase() === tag) || tag
+      // 元のタグ名（表示用）を見つける
+      originalTag:
+        posts
+          .find((post) =>
+            post.data.tags.map((t) => t.toLowerCase()).includes(normalizedTag)
+          )
+          ?.data.tags.find((t) => t.toLowerCase() === normalizedTag) ||
+        normalizedTag,
     },
   }));
 }

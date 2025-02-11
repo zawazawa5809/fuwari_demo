@@ -1,60 +1,127 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import TimelineItem from '../../components/TimelineItem.astro';
-import { getCollection } from 'astro:content';
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TimelineLayout from "../../layouts/TimelineLayout.astro";
+import { getCollection } from "astro:content";
 
-// シンプルな日付フォーマット関数
-function formatDate(dateStr: string) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return '';
-  
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}/${month}/${day}`;
-}
+const posts = await getCollection("posts");
 
-const posts = await getCollection('posts');
-const categories = posts.reduce((acc, post) => {
-  const category = post.data.category || 'Uncategorized';
-  if (!acc[category]) {
-    acc[category] = [];
-  }
-  acc[category].push(post);
-  return acc;
-}, {} as Record<string, any[]>);
+// カテゴリーの収集と記事数のカウント
+const categories = posts.reduce(
+  (acc, post) => {
+    const category = post.data.category;
+    if (!category) return acc;
 
-// カテゴリーをアルファベット順にソート
-const sortedCategories = Object.entries(categories).sort(([a], [b]) => a.localeCompare(b));
+    const normalizedCategory = category.toLowerCase();
+    if (!acc[normalizedCategory]) {
+      acc[normalizedCategory] = {
+        name: category,
+        count: 0,
+        posts: [],
+      };
+    }
+    acc[normalizedCategory].count++;
+    acc[normalizedCategory].posts.push(post);
+    return acc;
+  },
+  {} as Record<string, { name: string; count: number; posts: any[] }>
+);
+
+// カテゴリーを記事数順にソート
+const sortedCategories = Object.values(categories).sort(
+  (a, b) => b.count - a.count
+);
 ---
 
 <BaseLayout title="Categories">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-3xl font-bold text-center mb-8 text-slate-900 dark:text-slate-100">Categories</h1>
-    <div class="border-l-2 border-slate-200 dark:border-slate-800">
-      {sortedCategories.map(([category, posts]) => (
-        <TimelineItem title={category} count={posts.length}>
-          <div class="space-y-3">
-            {posts
-              .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
-              .map(post => (
-              <div class="flex gap-x-3 relative">
-                <time class="text-sm text-slate-500 dark:text-slate-400 w-20 shrink-0">
-                  {formatDate(post.data.date)}
-                </time>
-                <a href={`/posts/${post.slug}`} 
-                   class="text-slate-800 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400">
-                  {post.data.title}
-                </a>
-              </div>
-            ))}
-          </div>
-        </TimelineItem>
-      ))}
+    <h1
+      class="text-3xl font-bold text-center mb-8 text-slate-900 dark:text-slate-100"
+    >
+      Categories
+    </h1>
+
+    <div class="mb-8 flex flex-wrap gap-2">
+      <a
+        href="#"
+        class="category-link inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+        data-category=""
+      >
+        <span class="text-gray-700 dark:text-gray-300">All</span>
+        <span class="ml-2 text-gray-500 dark:text-gray-500"
+          >({posts.length})</span
+        >
+      </a>
+      {
+        sortedCategories.map(({ name, count }) => (
+          <a
+            href={`#${name.toLowerCase()}`}
+            class="category-link inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+            data-category={name.toLowerCase()}
+          >
+            <span class="text-gray-700 dark:text-gray-300">{name}</span>
+            <span class="ml-2 text-gray-500 dark:text-gray-500">({count})</span>
+          </a>
+        ))
+      }
     </div>
+
+    <TimelineLayout posts={posts} />
   </div>
 </BaseLayout>
+
+<script>
+  function updateActiveCategory() {
+    const hash = window.location.hash.slice(1).toLowerCase();
+    const categoryLinks = document.querySelectorAll(".category-link");
+
+    categoryLinks.forEach((link) => {
+      const linkCategory =
+        (link as HTMLElement).dataset.category?.toLowerCase() || "";
+      const isActive = linkCategory === hash;
+
+      if (isActive) {
+        link.classList.add("active", "bg-primary-500");
+        link.classList.remove("bg-gray-100", "dark:bg-gray-800");
+        const spans = link.querySelectorAll("span");
+        spans.forEach((span) => span.classList.add("text-white"));
+      } else {
+        link.classList.remove("active", "bg-primary-500");
+        link.classList.add("bg-gray-100", "dark:bg-gray-800");
+        const spans = link.querySelectorAll("span");
+        spans.forEach((span) => {
+          span.classList.remove("text-white");
+          if (span.classList.contains("text-gray-500")) {
+            span.classList.add("dark:text-gray-500");
+          } else {
+            span.classList.add("text-gray-700", "dark:text-gray-300");
+          }
+        });
+      }
+    });
+
+    // Dispatch event for timeline filtering
+    window.dispatchEvent(
+      new CustomEvent("timelineFilter", { detail: { filter: hash } })
+    );
+  }
+
+  // Handle category link clicks
+  document.querySelectorAll(".category-link").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const href =
+        (e.currentTarget as HTMLAnchorElement).getAttribute("href") || "#";
+      if (href !== window.location.hash) {
+        history.pushState(null, "", href);
+        updateActiveCategory();
+      }
+    });
+  });
+
+  // Initial state and hash change handling
+  window.addEventListener("load", updateActiveCategory);
+  window.addEventListener("hashchange", updateActiveCategory);
+</script>
 
 <style>
   .timeline-container {
@@ -76,7 +143,7 @@ const sortedCategories = Object.entries(categories).sort(([a], [b]) => a.localeC
   }
 
   .timeline::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     top: 0;
@@ -114,7 +181,7 @@ const sortedCategories = Object.entries(categories).sort(([a], [b]) => a.localeC
 
   .post-count {
     font-size: 1rem;
-    color: var(--color-text-muted);
+    color: var (--color-text-muted);
   }
 
   .post-list {
@@ -150,5 +217,18 @@ const sortedCategories = Object.entries(categories).sort(([a], [b]) => a.localeC
       flex-direction: column;
       gap: 0.25rem;
     }
+  }
+
+  .category-link.active {
+    @apply bg-primary-500 text-white;
+  }
+
+  .category-link {
+    transition: all 0.3s ease;
+  }
+
+  .category-link.active {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 </style>

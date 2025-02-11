@@ -1,56 +1,71 @@
 ---
-import { getCollection } from 'astro:content';
+import { getCollection } from "astro:content";
 
 // 全記事を取得してカテゴリーとタグの集計を行う
-const posts = await getCollection('posts');
+const posts = await getCollection("posts");
 
 // カテゴリーの集計
-const categories = posts.reduce((acc, post) => {
-  const category = post.data.category || 'Uncategorized';
-  acc[category] = (acc[category] || 0) + 1;
-  return acc;
-}, {} as Record<string, number>);
+const categories = posts.reduce(
+  (acc, post) => {
+    const category = post.data.category || "Uncategorized";
+    acc[category] = (acc[category] || 0) + 1;
+    return acc;
+  },
+  {} as Record<string, number>
+);
 
 // タグの集計
-const tags = posts.reduce((acc, post) => {
-  post.data.tags?.forEach(tag => {
-    acc[tag] = (acc[tag] || 0) + 1;
-  });
-  return acc;
-}, {} as Record<string, number>);
+const tags = posts.reduce(
+  (acc, post) => {
+    post.data.tags?.forEach((tag) => {
+      acc[tag] = (acc[tag] || 0) + 1;
+    });
+    return acc;
+  },
+  {} as Record<string, number>
+);
 
 // カテゴリーとタグをそれぞれ記事数順にソート
-const sortedCategories = Object.entries(categories).sort(([,a], [,b]) => b - a);
-const sortedTags = Object.entries(tags).sort(([,a], [,b]) => b - a);
+const sortedCategories = Object.entries(categories).sort(
+  ([, a], [, b]) => b - a
+);
+const sortedTags = Object.entries(tags).sort(([, a], [, b]) => b - a);
 ---
 
 <div class="sidebar-nav">
   <img src="/images/avatar.png" alt="Profile" class="profile-image" />
-  
+
   <nav class="nav-sections">
     <div class="nav-section">
       <h2 class="nav-title">Categories</h2>
       <ul class="nav-list">
-        {sortedCategories.map(([category, count]) => (
-          <li class="nav-item">
-            <a href={`/categories#${category.toLowerCase()}`} class="nav-link group">
-              <span class="nav-text">{category}</span>
-              <span class="nav-count">{count}</span>
-            </a>
-          </li>
-        ))}
+        {
+          sortedCategories.map(([category, count]) => (
+            <li class="nav-item">
+              <a
+                href={`/categories/#${category.toLowerCase()}`}
+                class="nav-link group"
+              >
+                <span class="nav-text">{category}</span>
+                <span class="nav-count">{count}</span>
+              </a>
+            </li>
+          ))
+        }
       </ul>
     </div>
 
     <div class="nav-section">
       <h2 class="nav-title">Tags</h2>
       <div class="tags-cloud">
-        {sortedTags.map(([tag, count]) => (
-          <a href={`/tags#${tag.toLowerCase()}`} class="tag-item">
-            #{tag}
-            <span class="tag-count">{count}</span>
-          </a>
-        ))}
+        {
+          sortedTags.map(([tag, count]) => (
+            <a href={`/tags/#${tag.toLowerCase()}`} class="tag-item">
+              #{tag}
+              <span class="tag-count">{count}</span>
+            </a>
+          ))
+        }
       </div>
     </div>
   </nav>
@@ -156,3 +171,27 @@ const sortedTags = Object.entries(tags).sort(([,a], [,b]) => b - a);
     opacity: 0.8;
   }
 </style>
+
+<script>
+  function updateActiveLinks() {
+    const currentPath = window.location.pathname;
+    const hash = window.location.hash.slice(1).toLowerCase();
+
+    // カテゴリーとタグのリンクを取得
+    const links = document.querySelectorAll(".nav-link, .tag-item");
+
+    links.forEach((link) => {
+      const href = (link as HTMLAnchorElement).getAttribute("href");
+      if (!href) return;
+
+      const [path, linkHash] = href.split("#");
+      const isActive = currentPath === path && (!hash || linkHash === hash);
+
+      link.classList.toggle("active", isActive);
+    });
+  }
+
+  // 初期化時とハッシュ変更時にリンクの状態を更新
+  updateActiveLinks();
+  window.addEventListener("hashchange", updateActiveLinks);
+</script>

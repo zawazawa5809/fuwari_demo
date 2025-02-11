@@ -1,9 +1,38 @@
 ---
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  posts: CollectionEntry<"posts">[];
+}
+
 const { posts } = Astro.props;
 
-const tags = [...new Set(posts.flatMap(post => post.data.tags))];
-const tagCounts = tags.reduce((acc, tag) => {
-  acc[tag] = posts.filter(post => post.data.tags.includes(tag)).length;
+// タグを小文字に正規化してユニークな配列を生成
+const tags = [
+  ...new Set(
+    posts.flatMap((post: CollectionEntry<"posts">) =>
+      (post.data.tags || []).map((tag) => tag.toLowerCase())
+    )
+  ),
+] as string[];
+
+// タグのカウントを計算（小文字で比較）
+const tagCounts = tags.reduce((acc: Record<string, number>, tag: string) => {
+  acc[tag] = posts.filter((post: CollectionEntry<"posts">) =>
+    post.data.tags?.map((t) => t.toLowerCase()).includes(tag)
+  ).length;
+  return acc;
+}, {});
+
+// オリジナルのタグ名を保持（表示用）
+const originalTagNames = posts.reduce((acc: Record<string, string>, post) => {
+  post.data.tags?.forEach((tag) => {
+    const lowerTag = tag.toLowerCase();
+    // 最初に見つかったタグの大文字小文字の形式を保持
+    if (!acc[lowerTag]) {
+      acc[lowerTag] = tag;
+    }
+  });
   return acc;
 }, {});
 ---
@@ -11,28 +40,34 @@ const tagCounts = tags.reduce((acc, tag) => {
 <div>
   <h2 class="text-lg font-semibold mb-4">Tags</h2>
   <div class="flex flex-wrap gap-2">
-    {tags.map(tag => (
-      <a
-        href={`/tags/${tag.toLowerCase()}`}
-        class="inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
-      >
-        <span class="text-gray-700 dark:text-gray-300">#{tag}</span>
-        <span class="ml-2 text-gray-500 dark:text-gray-500">{tagCounts[tag]}</span>
-      </a>
-    ))}
+    {
+      tags.map((tag) => (
+        <a
+          href={`/tags/#${tag}`}
+          class="inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+        >
+          <span class="text-gray-700 dark:text-gray-300">
+            #{originalTagNames[tag]}
+          </span>
+          <span class="ml-2 text-gray-500 dark:text-gray-500">
+            {tagCounts[tag]}
+          </span>
+        </a>
+      ))
+    }
   </div>
 </div>
 
 <script>
   // タグのホバーエフェクトを強化
   const tagLinks = document.querySelectorAll('a[href^="/tags/"]');
-  tagLinks.forEach(link => {
-    link.addEventListener('mouseenter', () => {
-      link.classList.add('scale-105');
-      link.style.transition = 'transform 0.2s ease-in-out';
+  tagLinks.forEach((link) => {
+    link.addEventListener("mouseenter", () => {
+      link.classList.add("scale-105");
+      (link as HTMLElement).style.transition = "transform 0.2s ease-in-out";
     });
-    link.addEventListener('mouseleave', () => {
-      link.classList.remove('scale-105');
+    link.addEventListener("mouseleave", () => {
+      link.classList.remove("scale-105");
     });
   });
-</script> 
+</script>

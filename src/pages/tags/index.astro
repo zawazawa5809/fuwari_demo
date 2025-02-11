@@ -1,88 +1,124 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import TimelineItem from '../../components/TimelineItem.astro';
-import { getCollection } from 'astro:content';
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TimelineLayout from "../../layouts/TimelineLayout.astro";
+import { getCollection } from "astro:content";
 
-// シンプルな日付フォーマット関数
-function formatDate(dateStr: string) {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  if (isNaN(date.getTime())) return '';
-  
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}/${month}/${day}`;
-}
+const posts = await getCollection("posts");
 
-const posts = await getCollection('posts');
-const tags = posts.reduce((acc, post) => {
-  post.data.tags?.forEach(tag => {
-    if (!acc[tag]) {
-      acc[tag] = [];
-    }
-    acc[tag].push(post);
-  });
-  return acc;
-}, {} as Record<string, any[]>);
+// タグの収集と記事数のカウント（小文字で正規化）
+const tags = posts.reduce(
+  (acc, post) => {
+    post.data.tags?.forEach((tag) => {
+      const normalizedTag = tag.toLowerCase();
+      if (!acc[normalizedTag]) {
+        acc[normalizedTag] = {
+          name: tag, // オリジナルのタグ名を保持
+          count: 0,
+          posts: [],
+        };
+      }
+      acc[normalizedTag].count++;
+      acc[normalizedTag].posts.push(post);
+    });
+    return acc;
+  },
+  {} as Record<string, { name: string; count: number; posts: any[] }>
+);
 
 // タグを記事数順にソート
-const sortedTags = Object.entries(tags)
-  .sort(([, a], [, b]) => b.length - a.length);
+const sortedTags = Object.values(tags).sort((a, b) => b.count - a.count);
 ---
 
 <BaseLayout title="Tags">
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <h1 class="text-3xl font-bold text-center mb-8 text-slate-900 dark:text-slate-100">Tags</h1>
-    <div class="border-l-2 border-slate-200 dark:border-slate-800">
-      {sortedTags.map(([tag, posts]) => (
-        <TimelineItem title={`#${tag}`} count={posts.length}>
-          <div class="space-y-3">
-            {posts
-              .sort((a, b) => new Date(b.data.date).getTime() - new Date(a.data.date).getTime())
-              .map(post => (
-              <div class="flex gap-x-3 relative">
-                <time class="text-sm text-slate-500 dark:text-slate-400 w-20 shrink-0">
-                  {formatDate(post.data.date)}
-                </time>
-                <a href={`/posts/${post.slug}`} 
-                   class="text-slate-800 dark:text-slate-200 hover:text-indigo-600 dark:hover:text-indigo-400">
-                  {post.data.title}
-                </a>
-              </div>
-            ))}
-          </div>
-        </TimelineItem>
-      ))}
+    <h1
+      class="text-3xl font-bold text-center mb-8 text-slate-900 dark:text-slate-100"
+    >
+      Tags
+    </h1>
+
+    <!-- タグリスト -->
+    <div class="mb-8 flex flex-wrap gap-2">
+      <a
+        href="#"
+        class="tag-link inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+        data-tag=""
+      >
+        <span class="text-gray-700 dark:text-gray-300">All</span>
+        <span class="ml-2 text-gray-500 dark:text-gray-500"
+          >({posts.length})</span
+        >
+      </a>
+      {
+        sortedTags.map(({ name, count }) => (
+          <a
+            href={`#${name.toLowerCase()}`}
+            class="tag-link inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+            data-tag={name.toLowerCase()}
+          >
+            <span class="text-gray-700 dark:text-gray-300">#{name}</span>
+            <span class="ml-2 text-gray-500 dark:text-gray-500">({count})</span>
+          </a>
+        ))
+      }
     </div>
+
+    <!-- タイムライン -->
+    <TimelineLayout posts={posts} />
   </div>
 </BaseLayout>
 
+<script>
+  function updateActiveTag() {
+    const hash = window.location.hash.slice(1).toLowerCase();
+    const tagLinks = document.querySelectorAll(".tag-link");
+
+    tagLinks.forEach((link) => {
+      const linkTag = (link as HTMLElement).dataset.tag;
+      const isActive = linkTag === hash;
+
+      if (isActive) {
+        link.classList.add("active", "bg-primary-500", "text-white");
+        link.classList.remove("bg-gray-100", "dark:bg-gray-800");
+      } else {
+        link.classList.remove("active", "bg-primary-500", "text-white");
+        link.classList.add("bg-gray-100", "dark:bg-gray-800");
+      }
+    });
+
+    // タイムラインの更新をトリガー
+    window.dispatchEvent(
+      new CustomEvent("timelineFilter", { detail: { filter: hash } })
+    );
+  }
+
+  // タグリンクのクリックハンドラ
+  document.querySelectorAll(".tag-link").forEach((link) => {
+    link.addEventListener("click", (e) => {
+      e.preventDefault();
+      const href =
+        (e.currentTarget as HTMLAnchorElement).getAttribute("href") || "#";
+      if (href !== window.location.hash) {
+        window.location.hash = href;
+      } else {
+        updateActiveTag(); // 同じタグをクリックした場合も更新
+      }
+    });
+  });
+
+  // 初期状態の設定とハッシュ変更時の処理
+  window.addEventListener("load", updateActiveTag);
+  window.addEventListener("hashchange", updateActiveTag);
+</script>
+
 <style>
-  /* categories/index.astroと同じスタイル */
-  h1 {
-    margin: 2rem 0;
-    font-size: 2rem;
-    color: var(--color-text);
+  .tag-link {
+    transition: all 0.3s ease;
   }
 
-  .tags-list {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-
-  .tag {
-    padding: 0.5rem 1rem;
-    background: var(--color-card);
-    border-radius: var(--radius-base);
-    color: var(--color-text);
-    text-decoration: none;
-    transition: all 0.2s ease;
-  }
-
-  .tag:hover {
-    background: var(--color-primary);
-    color: var(--color-bg);
+  .tag-link.active {
+    @apply bg-primary-500 text-white;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 </style>

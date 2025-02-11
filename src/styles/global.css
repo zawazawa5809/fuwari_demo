@@ -143,11 +143,11 @@
 
   /* View Transitions アニメーション */
   ::view-transition-old(root) {
-    animation: fade-out var(--transition-duration) var(--transition-timing) both;
+    animation: none;
   }
 
   ::view-transition-new(root) {
-    animation: fade-in var(--transition-duration) var(--transition-timing) both;
+    animation: none;
   }
 
   /* パーシステント要素のトランジション */
