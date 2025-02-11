@@ -57,13 +57,9 @@ const { isHome = false } = Astro.props;
     overflow: hidden;
   }
 
-  .skeleton-image {
-    @apply bg-gray-200 dark:bg-gray-700 animate-pulse;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     .skeleton-image {
-      animation: none;
+      animation: non;
     }
   }
 </style>
