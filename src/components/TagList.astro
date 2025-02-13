@@ -43,7 +43,7 @@ const originalTagNames = posts.reduce((acc: Record<string, string>, post) => {
     {
       tags.map((tag) => (
         <a
-          href={`/tags/#${tag}`}
+          href={`/tags/${tag}`}
           class="inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
         >
           <span class="text-gray-700 dark:text-gray-300">

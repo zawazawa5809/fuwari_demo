@@ -1,36 +1,60 @@
 ---
 import { getCollection } from "astro:content";
-import TagLayout from "../../layouts/TagLayout.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TimelineLayout from "../../layouts/TimelineLayout.astro";
 
 export async function getStaticPaths() {
   const posts = await getCollection("posts");
-  // タグを小文字に正規化して重複を除去
   const tags = [
     ...new Set(
-      posts.flatMap((post) => post.data.tags.map((tag) => tag.toLowerCase()))
+      posts.flatMap(
+        (post) => post.data.tags?.map((tag) => tag.toLowerCase()) || []
+      )
     ),
   ];
 
-  return tags.map((normalizedTag) => ({
-    params: { tag: normalizedTag },
-    props: {
-      posts: posts.filter((post) =>
-        post.data.tags.map((t) => t.toLowerCase()).includes(normalizedTag)
-      ),
-      // 元のタグ名（表示用）を見つける
-      originalTag:
-        posts
-          .find((post) =>
-            post.data.tags.map((t) => t.toLowerCase()).includes(normalizedTag)
-          )
-          ?.data.tags.find((t) => t.toLowerCase() === normalizedTag) ||
-        normalizedTag,
-    },
-  }));
+  return tags.map((tagSlug) => {
+    const tagPosts = posts
+      .filter((post) =>
+        post.data.tags?.some((t) => t.toLowerCase() === tagSlug)
+      )
+      .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+    // オリジナルのケースを保持したタグ名を取得
+    const originalTag =
+      tagPosts[0]?.data.tags.find((t) => t.toLowerCase() === tagSlug) ||
+      tagSlug;
+
+    return {
+      params: { tag: tagSlug },
+      props: {
+        tag: originalTag,
+        posts: tagPosts,
+        totalCount: tagPosts.length,
+      },
+    };
+  });
 }
 
-const { tag } = Astro.params;
-const { posts, originalTag } = Astro.props;
+const { tag, posts, totalCount } = Astro.props;
 ---
 
-<TagLayout tag={originalTag} posts={posts} />
+<BaseLayout title={`Tag: ${tag}`}>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold mb-2 dark:text-gray-100">
+        <span
+          class="inline-block bg-gray-100 dark:bg-gray-800 rounded-full px-3 py-1 text-sm mr-2"
+        >
+          #{tag}
+        </span>
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        {totalCount}
+        {totalCount === 1 ? "post" : "posts"} with this tag
+      </p>
+    </div>
+
+    <TimelineLayout posts={posts} />
+  </div>
+</BaseLayout>

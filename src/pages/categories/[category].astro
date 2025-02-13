@@ -1,30 +1,52 @@
 ---
-import { getCollection } from 'astro:content';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import TimelineLayout from '../../layouts/TimelineLayout.astro';
-
-export const prerender = true;
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TimelineLayout from "../../layouts/TimelineLayout.astro";
+import CategoryLabel from "../../components/CategoryLabel.astro";
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts');
-  const categories = [...new Set(posts.map(post => post.data.category).filter(Boolean))];
+  const posts = await getCollection("posts");
+  const categories = [
+    ...new Set(
+      posts.map((post) => post.data.category?.toLowerCase()).filter(Boolean)
+    ),
+  ];
 
-  return categories.map(category => ({
-    params: { category: category.toLowerCase() },
-    props: {
-      posts: posts
-        .filter(post => !post.data.draft)
-        .filter(post => post.data.category?.toLowerCase() === category.toLowerCase())
-        .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()),
-      originalCategory: category,
-    },
-  }));
+  return categories.map((categorySlug) => {
+    const categoryPosts = posts
+      .filter((post) => post.data.category?.toLowerCase() === categorySlug)
+      .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+    // 元のケースを維持したカテゴリー名を取得
+    const originalCategory = categoryPosts[0]?.data.category || categorySlug;
+
+    return {
+      params: { category: categorySlug },
+      props: {
+        category: originalCategory,
+        posts: categoryPosts,
+        totalCount: categoryPosts.length,
+      },
+    };
+  });
 }
 
-const { category } = Astro.params;
-const { posts, originalCategory } = Astro.props;
+const { category, posts, totalCount } = Astro.props;
 ---
 
-<BaseLayout title={`Category: ${originalCategory}`} description={`Posts in category ${originalCategory}`}>
-  <TimelineLayout posts={posts} title={`Category: ${originalCategory}`} />
-</BaseLayout> 
+<BaseLayout title={`Category: ${category}`}>
+  <div class="max-w-4xl mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold mb-2 dark:text-gray-100">
+        <CategoryLabel category={category} />
+        <span class="ml-3">{category}</span>
+      </h1>
+      <p class="text-gray-600 dark:text-gray-400">
+        {totalCount}
+        {totalCount === 1 ? "post" : "posts"} in this category
+      </p>
+    </div>
+
+    <TimelineLayout posts={posts} />
+  </div>
+</BaseLayout>

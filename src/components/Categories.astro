@@ -1,67 +1,63 @@
 ---
-import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 
-// 全記事を取得
-const posts = await getCollection("posts");
+interface Props {
+  posts: CollectionEntry<"posts">[];
+  class?: string;
+}
 
-// カテゴリーの集計
-const categoryCount = posts.reduce(
-  (acc: Record<string, number>, post: CollectionEntry<"posts">) => {
-    const category = post.data.category;
-    if (category) {
-      acc[category] = (acc[category] || 0) + 1;
-    }
-    return acc;
-  },
-  {}
-);
+const { posts, class: className } = Astro.props;
 
-// カテゴリーを記事数順にソート
-const categories = Object.entries(categoryCount)
-  .map(([name, count]) => ({
-    name,
-    count,
-    slug: name.toLowerCase().replace(/\s+/g, "-"),
-  }))
-  .sort((a, b) => b.count - a.count);
+const categories = [
+  ...new Set(posts.map((post) => post.data.category).filter(Boolean)),
+].sort();
 ---
 
-<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-  <h2 class="text-lg font-semibold mb-4">Categories</h2>
-  <ul class="space-y-2">
+<div class={`categories-container ${className || ""}`}>
+  <h2 class="font-bold text-xl mb-4 dark:text-gray-200">Categories</h2>
+  <div class="flex flex-wrap gap-2">
     {
       categories.map((category) => (
-        <li class="flex justify-between items-center">
-          <a
-            href={`/categories/#${category.slug}`}
-            class="text-gray-700 dark:text-gray-300 hover:text-primary transition-colors category-link"
-          >
-            {category.name}
-            <span class="ml-2 text-gray-500 dark:text-gray-400">
-              ({category.count})
-            </span>
-          </a>
-        </li>
+        <a
+          href={`/categories/${category.toLowerCase()}`}
+          class="category-link inline-block px-3 py-1 text-sm rounded-full 
+          bg-gray-200 hover:bg-primary-100 dark:bg-gray-700 dark:hover:bg-gray-600 
+          transition-colors duration-200"
+          data-category={category.toLowerCase()}
+        >
+          {category}
+        </a>
       ))
     }
-  </ul>
+  </div>
 </div>
 
 <script>
-  function handleCategoryClick(e: Event) {
-    const anchor = e.currentTarget as HTMLAnchorElement;
-    const href = anchor.getAttribute("href");
-    if (href) {
-      e.preventDefault();
-      const hash = href.split("#")[1];
-      window.history.pushState(null, "", `/categories/#${hash}`);
-      window.dispatchEvent(new HashChangeEvent("hashchange"));
-    }
+  function setupCategoryLinks() {
+    const categoryLinks = document.querySelectorAll(".category-link");
+    categoryLinks.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const category =
+          (e.currentTarget as HTMLAnchorElement).dataset.category || "";
+
+        // カスタムイベントを発火
+        window.dispatchEvent(
+          new CustomEvent("timelineFilter", {
+            detail: { filter: category },
+          })
+        );
+
+        // URLを更新
+        const href = (e.currentTarget as HTMLAnchorElement).href;
+        window.history.pushState(null, "", href);
+      });
+    });
   }
 
-  // カテゴリーリンクのクリックイベントハンドラを設定
-  document.querySelectorAll(".category-link").forEach((anchor) => {
-    anchor.addEventListener("click", handleCategoryClick);
-  });
+  // 初期化処理
+  setupCategoryLinks();
+
+  // Astroのページ遷移後にも再初期化
+  document.addEventListener("astro:page-load", setupCategoryLinks);
 </script>

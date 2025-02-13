@@ -43,8 +43,9 @@ const sortedTags = Object.entries(tags).sort(([, a], [, b]) => b - a);
           sortedCategories.map(([category, count]) => (
             <li class="nav-item">
               <a
-                href={`/categories/#${category.toLowerCase()}`}
+                href={`/categories/${category.toLowerCase()}`}
                 class="nav-link group"
+                data-astro-prefetch
               >
                 <span class="nav-text">{category}</span>
                 <span class="nav-count">{count}</span>
@@ -60,9 +61,9 @@ const sortedTags = Object.entries(tags).sort(([, a], [, b]) => b - a);
       <div class="tags-cloud">
         {
           sortedTags.map(([tag, count]) => (
-            <a href={`/tags/#${tag.toLowerCase()}`} class="tag-item">
-              #{tag}
-              <span class="tag-count">{count}</span>
+            <a href={`/tags/${tag.toLowerCase()}`} class="tag-item">
+              <span class="tag-text">#{tag}</span>
+              <span class="tag-count">({count})</span>
             </a>
           ))
         }
@@ -73,102 +74,59 @@ const sortedTags = Object.entries(tags).sort(([, a], [, b]) => b - a);
 
 <style>
   .sidebar-nav {
-    padding: 1.5rem;
+    @apply flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md;
   }
 
   .profile-image {
-    width: 120px;
-    height: 120px;
-    border-radius: 50%;
-    margin: 0 auto 2rem;
-    display: block;
+    @apply w-24 h-24 rounded-full mb-6 border-4 border-white dark:border-gray-700 shadow-md;
   }
 
   .nav-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
+    @apply w-full space-y-8;
+  }
+
+  .nav-section {
+    @apply w-full;
   }
 
   .nav-title {
-    font-size: 0.875rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-text-muted);
-    margin-bottom: 1rem;
+    @apply text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200;
   }
 
   .nav-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+    @apply space-y-2;
   }
 
   .nav-item {
-    margin: 0.5rem 0;
+    @apply w-full;
   }
 
   .nav-link {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0.75rem;
-    border-radius: 0.375rem;
-    color: var(--color-text);
-    text-decoration: none;
-    background: transparent;
-    transition: all 0.2s;
+    @apply flex justify-between items-center p-2 rounded-md text-gray-600 hover:text-primary-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-primary-400 dark:hover:bg-gray-700/50 transition-colors duration-200;
   }
 
-  .nav-link:hover {
-    background-color: var(--color-bg-hover);
-    color: var(--color-primary);
+  .nav-text {
+    @apply text-sm;
   }
 
   .nav-count {
-    font-size: 0.75rem;
-    color: var(--color-text-muted);
-    background-color: var(--color-bg-muted);
-    padding: 0.25rem 0.5rem;
-    border-radius: 999px;
-    transition: all 0.2s;
-  }
-
-  .nav-link:hover .nav-count {
-    background-color: var(--color-primary);
-    color: white;
+    @apply text-xs text-gray-500 dark:text-gray-500;
   }
 
   .tags-cloud {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    @apply flex flex-wrap gap-2;
   }
 
   .tag-item {
-    font-size: 0.875rem;
-    color: var(--color-text-muted);
-    text-decoration: none;
-    padding: 0.25rem 0.75rem;
-    border-radius: 999px;
-    background-color: var(--color-bg-muted);
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    border: 1px solid transparent;
+    @apply inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors duration-200;
   }
 
-  .tag-item:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    background-color: var(--color-bg-hover);
+  .tag-text {
+    @apply text-sm;
   }
 
   .tag-count {
-    font-size: 0.75rem;
-    opacity: 0.8;
+    @apply text-xs text-gray-500 dark:text-gray-500;
   }
 </style>
 

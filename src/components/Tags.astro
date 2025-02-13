@@ -1,46 +1,31 @@
 ---
-import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
 
-// 全記事を取得
-const posts = await getCollection("posts");
+interface Props {
+  posts: CollectionEntry<"posts">[];
+  class?: string;
+}
 
-// タグの集計
-const tagCount = posts.reduce(
-  (acc, post) => {
-    post.data.tags?.forEach((tag) => {
-      if (!acc[tag]) {
-        acc[tag] = 0;
-      }
-      acc[tag]++;
-    });
-    return acc;
-  },
-  {} as Record<string, number>
-);
+const { posts, class: className } = Astro.props;
 
-// タグを記事数順にソート
-const tags = Object.entries(tagCount)
-  .map(([name, count]) => ({
-    name,
-    count,
-    slug: name.toLowerCase().replace(/\s+/g, "-"),
-  }))
-  .sort((a, b) => b.count - a.count);
+const tags = [
+  ...new Set(posts.map((post) => post.data.tags || []).flat()),
+].sort();
 ---
 
-<div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm">
-  <h2 class="text-lg font-semibold mb-4">Tags</h2>
+<div class={`tags-container ${className || ""}`}>
+  <h2 class="font-bold text-xl mb-4 dark:text-gray-200">Tags</h2>
   <div class="flex flex-wrap gap-2">
     {
       tags.map((tag) => (
         <a
-          href={`/tags/#${tag.slug}`}
-          class="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+          href={`/tags/${tag.toLowerCase()}`}
+          class="tag-link inline-block px-3 py-1 text-sm rounded-full 
+          bg-gray-200 hover:bg-primary-100 dark:bg-gray-700 dark:hover:bg-gray-600 
+          transition-colors duration-200"
+          data-tag={tag.toLowerCase()}
         >
-          <span class="text-gray-700 dark:text-gray-300">#{tag.name}</span>
-          <span class="ml-2 text-xs text-gray-500 dark:text-gray-400">
-            ({tag.count})
-          </span>
+          {tag}
         </a>
       ))
     }
@@ -48,16 +33,30 @@ const tags = Object.entries(tagCount)
 </div>
 
 <script>
-  // スムーズなスクロール処理の追加
-  document.querySelectorAll('a[href^="/tags/#"]').forEach((anchor) => {
-    anchor.addEventListener("click", (e) => {
-      const href = (e.currentTarget as HTMLAnchorElement).getAttribute("href");
-      if (href) {
-        const hash = href.split("#")[1];
-        window.history.pushState(null, "", `/tags/#${hash}`);
-        window.dispatchEvent(new HashChangeEvent("hashchange"));
+  function setupTagLinks() {
+    const tagLinks = document.querySelectorAll(".tag-link");
+    tagLinks.forEach((link) => {
+      link.addEventListener("click", (e) => {
         e.preventDefault();
-      }
+        const tag = (e.currentTarget as HTMLAnchorElement).dataset.tag || "";
+
+        // カスタムイベントを発火
+        window.dispatchEvent(
+          new CustomEvent("timelineFilter", {
+            detail: { filter: tag },
+          })
+        );
+
+        // URLを更新
+        const href = (e.currentTarget as HTMLAnchorElement).href;
+        window.history.pushState(null, "", href);
+      });
     });
-  });
+  }
+
+  // 初期化処理
+  setupTagLinks();
+
+  // Astroのページ遷移後にも再初期化
+  document.addEventListener("astro:page-load", setupTagLinks);
 </script>

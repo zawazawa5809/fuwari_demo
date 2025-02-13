@@ -33,7 +33,7 @@ const categoryCounts = categories.reduce(
       categories.map((category) => (
         <li>
           <a
-            href={`/categories/#${category.toLowerCase()}`}
+            href={`/categories/${category.toLowerCase()}`}
             class="flex items-center justify-between text-gray-600 hover:text-primary dark:text-gray-400 dark:hover:text-primary"
           >
             <span>{category}</span>

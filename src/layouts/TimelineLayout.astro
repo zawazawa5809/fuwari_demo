@@ -93,64 +93,107 @@ const years = Object.keys(postsByYear)
     const items = document.querySelectorAll<TimelineItem>(".timeline-item");
     const sections = document.querySelectorAll<HTMLElement>(".year-section");
 
+    if (!items.length || !sections.length) {
+      isFiltering = false;
+      return;
+    }
+
+    const normalizedFilter = filter.toLowerCase();
+
+    // すべてのアイテムの表示状態を一度に計算
+    const itemVisibility = new Map<TimelineItem, boolean>();
+    items.forEach((item) => {
+      const category = (item.dataset.category || "").toLowerCase();
+      const tags = (item.dataset.tags || "")
+        .split(",")
+        .map((tag) => tag.toLowerCase())
+        .filter(Boolean);
+
+      const shouldShow =
+        !normalizedFilter ||
+        category === normalizedFilter ||
+        tags.includes(normalizedFilter);
+
+      itemVisibility.set(item, shouldShow);
+    });
+
+    // アニメーションを一括で適用
     requestAnimationFrame(() => {
-      if (!filter) {
-        items.forEach((item) => {
-          item.style.display = "";
-          item.style.opacity = "1";
-        });
-        sections.forEach((section) => {
-          section.style.display = "";
-          section.style.opacity = "1";
-        });
-        isFiltering = false;
-        return;
-      }
-
       items.forEach((item) => {
-        const category = item.dataset.category;
-        const tags = item.dataset.tags.split(",").filter(Boolean);
-        const normalizedFilter = filter.toLowerCase();
-
-        const shouldShow =
-          filter === "" ||
-          category.toLowerCase() === normalizedFilter ||
-          tags.includes(normalizedFilter);
-
+        const shouldShow = itemVisibility.get(item);
         if (shouldShow) {
           item.style.display = "";
           item.style.opacity = "0";
           requestAnimationFrame(() => {
-            item.style.transition = "opacity 0.3s ease-in-out";
+            item.style.transition = "opacity 0.2s ease-out";
             item.style.opacity = "1";
           });
         } else {
-          item.style.display = "none";
+          item.style.transition = "opacity 0.2s ease-out";
+          item.style.opacity = "0";
+          setTimeout(() => {
+            if (!itemVisibility.get(item)) {
+              item.style.display = "none";
+            }
+          }, 200);
         }
       });
 
-      // Update year sections visibility
+      // セクションの表示状態を更新
       sections.forEach((section) => {
-        const hasVisibleItems = Array.from(
-          section.querySelectorAll(".timeline-item")
-        ).some((item) => (item as HTMLElement).style.display !== "none");
+        const sectionHasVisibleItems = Array.from(
+          section.querySelectorAll<TimelineItem>(".timeline-item")
+        ).some((item) => itemVisibility.get(item));
 
-        if (hasVisibleItems) {
+        if (sectionHasVisibleItems) {
           section.style.display = "";
           section.style.opacity = "1";
         } else {
+          section.style.transition = "opacity 0.2s ease-out";
           section.style.opacity = "0";
           setTimeout(() => {
-            if (!hasVisibleItems) {
+            if (
+              !Array.from(
+                section.querySelectorAll<TimelineItem>(".timeline-item")
+              ).some((item) => itemVisibility.get(item))
+            ) {
               section.style.display = "none";
             }
-          }, 300);
+          }, 200);
         }
       });
 
       isFiltering = false;
     });
   }
+
+  // ハッシュの変更を監視してフィルタリングを実行
+  function handleHashChange() {
+    const hash = window.location.hash.slice(1);
+    filterTimelineItems(hash);
+  }
+
+  function initializeFiltering() {
+    const hash = window.location.hash.slice(1);
+    filterTimelineItems(hash);
+  }
+
+  // 初期表示時とページ遷移時の処理
+  document.addEventListener("DOMContentLoaded", () => {
+    requestAnimationFrame(initializeFiltering);
+  });
+
+  document.addEventListener("astro:after-swap", () => {
+    requestAnimationFrame(initializeFiltering);
+  });
+
+  document.addEventListener("astro:page-load", () => {
+    requestAnimationFrame(initializeFiltering);
+  });
+
+  window.addEventListener("hashchange", () => {
+    requestAnimationFrame(handleHashChange);
+  });
 
   function handleFilterChange(newFilter: string) {
     if (newFilter !== currentFilter) {
@@ -159,20 +202,14 @@ const years = Object.keys(postsByYear)
     }
   }
 
-  // Initial load and hash change handlers
-  window.addEventListener("load", () => {
-    const hash = window.location.hash.slice(1).toLowerCase();
-    handleFilterChange(hash);
-  });
-
-  window.addEventListener("hashchange", () => {
-    const hash = window.location.hash.slice(1).toLowerCase();
-    handleFilterChange(hash);
-  });
-
   // Custom event handler for timeline filtering
   window.addEventListener("timelineFilter", ((e: CustomEvent) => {
-    handleFilterChange(e.detail.filter);
+    const newFilter = e.detail.filter;
+    if (newFilter !== currentFilter) {
+      currentFilter = newFilter;
+      window.location.hash = newFilter; // URLハッシュを更新
+      filterTimelineItems(newFilter);
+    }
   }) as EventListener);
 </script>
 
