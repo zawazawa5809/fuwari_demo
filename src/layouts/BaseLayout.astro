@@ -46,22 +46,22 @@ const {
   </head>
   <body class="antialiased">
     <div class="flex flex-col min-h-screen">
-      <Header transition:persist="header" />
-      <Banner isHome={isHome} transition:persist="banner" />
+      <Header transition:persist />
+      <Banner isHome={isHome} transition:persist />
 
-      <main class="flex-1" transition:animate="slide">
+      <main class="flex-1" transition:animate="fade">
         <div class="container">
-          <div class="sidebar left-sidebar" transition:persist="sidebar">
+          <div class="sidebar left-sidebar" transition:persist>
             <SidebarNav />
           </div>
 
-          <div class="main-content optimize-gpu" transition:animate="fade">
+          <div class="main-content optimize-gpu optimize-animation">
             <slot />
           </div>
 
           {
             Astro.url.pathname.startsWith("/posts/") && toc && (
-              <div class="sidebar right-sidebar" transition:persist="toc">
+              <div class="sidebar right-sidebar" transition:persist>
                 <div class="toc-content optimize-scroll">
                   <h2 class="toc-title">目次</h2>
                   <ul class="toc-list">
@@ -78,10 +78,7 @@ const {
         </div>
       </main>
 
-      <footer
-        class="bg-gray-50 dark:bg-gray-800/50 py-8"
-        transition:persist="footer"
-      >
+      <footer class="bg-gray-50 dark:bg-gray-800/50 py-8" transition:persist>
         <div
           class="max-w-6xl mx-auto px-4 text-center text-gray-600 dark:text-gray-400"
         >
@@ -394,9 +391,27 @@ const {
     -webkit-overflow-scrolling: touch;
   }
 
+  .optimize-animation {
+    backface-visibility: hidden;
+    perspective: 1000;
+    transform-style: preserve-3d;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation-duration: 0.2s;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* View Transitions最適化 */
+  ::view-transition-group(*) {
+    animation: none;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .container,
     .main-content,
+    ::view-transition-group(*),
     ::view-transition-old(*),
     ::view-transition-new(*) {
       animation: none !important;

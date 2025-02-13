@@ -8,7 +8,7 @@
   --transition-duration: 0.3s;
   --header-height: 4rem;
   --sidebar-width: 16rem;
-  --page-transition-duration: 300ms;
+  --page-transition-duration: 200ms; /* トランジション時間を短縮 */
 
   /* ホバー時の背景色を追加 */
   --color-bg-hover: rgba(59, 130, 246, 0.1);
@@ -126,6 +126,59 @@
     hover:bg-gray-100 dark:hover:bg-gray-700
     focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500
     transition-colors duration-150;
+  }
+
+  /* View Transitions の最適化 */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
+  }
+
+  ::view-transition-old(page),
+  ::view-transition-new(page) {
+    animation-duration: var(--page-transition-duration);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* パフォーマンス最適化のためのユーティリティクラス */
+  .optimize-gpu {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+
+  .optimize-scroll {
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* アニメーションの最適化 */
+  .slide-enter,
+  .slide-exit {
+    animation-duration: var(--page-transition-duration);
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* アクセシビリティ対応 */
+  @media (prefers-reduced-motion: reduce) {
+    :root {
+      --page-transition-duration: 0s;
+      --transition-duration: 0s;
+    }
+
+    ::view-transition-group(*),
+    ::view-transition-old(*),
+    ::view-transition-new(*) {
+      animation: none !important;
+    }
+
+    .slide-enter,
+    .slide-exit {
+      animation: none !important;
+    }
   }
 
   /* View Transitions アニメーション */
