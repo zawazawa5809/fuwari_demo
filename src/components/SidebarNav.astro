@@ -14,22 +14,34 @@ const categories = posts.reduce(
   {} as Record<string, number>
 );
 
-// タグの集計
+// タグの集計（大文字小文字を正規化）
 const tags = posts.reduce(
   (acc, post) => {
     post.data.tags?.forEach((tag) => {
-      acc[tag] = (acc[tag] || 0) + 1;
+      const normalizedTag = tag.toLowerCase();
+      if (!acc[normalizedTag]) {
+        acc[normalizedTag] = {
+          name: tag, // オリジナルの表記を保持
+          count: 0,
+        };
+      }
+      acc[normalizedTag].count++;
     });
     return acc;
   },
-  {} as Record<string, number>
+  {} as Record<string, { name: string; count: number }>
 );
 
 // カテゴリーとタグをそれぞれ記事数順にソート
 const sortedCategories = Object.entries(categories).sort(
   ([, a], [, b]) => b - a
 );
-const sortedTags = Object.entries(tags).sort(([, a], [, b]) => b - a);
+const sortedTags = Object.entries(tags)
+  .sort(([, a], [, b]) => b.count - a.count)
+  .map(([key, value]) => ({
+    tag: value.name,
+    count: value.count,
+  }));
 ---
 
 <div class="sidebar-nav">
@@ -60,7 +72,7 @@ const sortedTags = Object.entries(tags).sort(([, a], [, b]) => b - a);
       <h2 class="nav-title">Tags</h2>
       <div class="tags-cloud">
         {
-          sortedTags.map(([tag, count]) => (
+          sortedTags.map(({ tag, count }) => (
             <a href={`/tags/${tag.toLowerCase()}`} class="tag-item">
               <span class="tag-text">#{tag}</span>
               <span class="tag-count">({count})</span>
