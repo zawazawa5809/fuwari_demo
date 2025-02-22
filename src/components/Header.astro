@@ -1,6 +1,6 @@
 ---
 import { SITE_CONFIG } from "../config";
-import ThemeToggle from "./ThemeToggle.astro";
+import ThemeToggle from "./ThemeToggle";
 import LoginButton from "./LoginButton";
 ---
 
@@ -24,7 +24,7 @@ import LoginButton from "./LoginButton";
           class="hover:text-primary transition-colors">GitHub</a
         >
         <LoginButton client:load />
-        <ThemeToggle />
+        <ThemeToggle client:load />
       </nav>
     </div>
   </div>

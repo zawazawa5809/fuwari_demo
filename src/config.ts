@@ -1,3 +1,5 @@
+import { defineCollection, z } from "astro:content";
+
 export const SITE_CONFIG = {
   author: "Lorem Ipsum",
   title: "Fuwari Blog",
@@ -36,3 +38,21 @@ export const CATEGORIES = {
   Tech: "技術",
   // 必要に応じて追加
 } as const;
+
+export const postsCollection = defineCollection({
+  type: "content",
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    pubDate: z.date(),
+    updatedDate: z.date().optional(),
+    heroImage: z.string().optional(),
+    category: z.string().optional(),
+    tags: z.array(z.string()).default([]),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = {
+  posts: postsCollection,
+};

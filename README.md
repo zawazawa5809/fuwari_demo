@@ -99,9 +99,60 @@ Fuwari Demo can be deployed to any static hosting service. Refer to the [Astro D
 - **Layouts and Components**: Customize the look and feel by editing components in `src/components/` and layouts in `src/layouts/`.
 - **Styling**: The project uses Tailwind CSS. Update or extend styles in `tailwind.config.mjs` and `src/styles/global.css`.
 
+## Code Quality Guidelines
+
+### Component Organization
+
+- Use Astro components (`.astro`) for static content and simple interactivity
+- Use React components (`.tsx`) only when complex client-side interactivity is required
+- Avoid duplicate implementations between Astro and React components
+- Keep demo components in a separate `demo/` directory
+
+### File Structure Best Practices
+
+- Consolidate configuration files in one location
+- Use TypeScript implementations over JavaScript where possible
+- Keep sample content separate from production content
+- Remove unused components and utilities
+
+### Performance Optimization
+
+- Minimize client-side JavaScript usage
+- Leverage Astro's partial hydration with `client:*` directives
+- Use appropriate image optimization techniques
+- Implement proper code splitting and lazy loading
+
+### Development Workflow
+
+1. Clean up unused components and files:
+
+   ```sh
+   # Example cleanup commands
+   pnpm run cleanup:unused
+   pnpm run cleanup:samples
+   ```
+
+2. Validate component usage:
+
+   ```sh
+   pnpm run validate:components
+   ```
+
+3. Check bundle size and optimization:
+   ```sh
+   pnpm run analyze:bundle
+   ```
+
 ## Contributing
 
 Contributions are welcome! Please open an issue or submit a pull request for improvements and bug fixes.
+
+Before submitting a pull request:
+
+1. Ensure no duplicate components exist
+2. Remove any unused code or dependencies
+3. Follow the code quality guidelines
+4. Update tests and documentation
 
 ## License
 
