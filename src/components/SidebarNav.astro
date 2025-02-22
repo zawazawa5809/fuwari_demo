@@ -47,14 +47,18 @@ const sortedTags = Object.entries(tags)
 ---
 
 <div class="sidebar-nav">
-  <Image
-    src={PROFILE_CONFIG.avatar}
-    alt={PROFILE_CONFIG.name}
-    width={96}
-    height={96}
-    loading="eager"
-    class="profile-image"
-  />
+  <div class="profile-image-wrapper" transition:persist>
+    <Image
+      src={PROFILE_CONFIG.avatar}
+      alt={PROFILE_CONFIG.name}
+      width={96}
+      height={96}
+      loading="eager"
+      decoding="sync"
+      fetchpriority="high"
+      class="profile-image"
+    />
+  </div>
 
   <nav class="nav-sections">
     <div class="nav-section">
@@ -83,9 +87,9 @@ const sortedTags = Object.entries(tags)
         {
           sortedTags.map(({ tag, count }) => (
             <a
-              href={`/tags/${tag.toLowerCase()}`}
+              href={`/tags/#${tag.toLowerCase()}`}
               class="tag-item"
-              data-astro-prefetch
+              data-tag={tag.toLowerCase()}
             >
               <span class="tag-text">#{tag}</span>
               <span class="tag-count">({count})</span>
@@ -100,10 +104,24 @@ const sortedTags = Object.entries(tags)
 <style>
   .sidebar-nav {
     @apply flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md;
+    contain: paint;
+  }
+
+  .profile-image-wrapper {
+    @apply mb-6;
+    will-change: transform;
   }
 
   .profile-image {
-    @apply w-24 h-24 rounded-full mb-6 border-4 border-white dark:border-gray-700 shadow-md;
+    @apply w-24 h-24 rounded-full border-4 border-white dark:border-gray-700 shadow-md;
+    will-change: transform;
+  }
+
+  /* プロフィール画像のView Transition最適化 */
+  ::view-transition-old(profile),
+  ::view-transition-new(profile) {
+    animation: none;
+    mix-blend-mode: normal;
   }
 
   .nav-sections {
@@ -143,7 +161,17 @@ const sortedTags = Object.entries(tags)
   }
 
   .tag-item {
-    @apply inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors duration-200;
+    @apply inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full 
+           bg-gray-100 hover:bg-primary-100 dark:bg-gray-800/50 dark:hover:bg-gray-700 
+           text-gray-700 dark:text-gray-300 transition-all duration-200;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
   }
 
   .tag-count {
@@ -155,3 +183,28 @@ const sortedTags = Object.entries(tags)
     display: none; /* 不要なスタイルを非表示に */
   }
 </style>
+
+<script>
+  function setupTagLinks() {
+    const tagLinks = document.querySelectorAll(".tag-item");
+    tagLinks.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        const currentPath = window.location.pathname;
+        const tag = (e.currentTarget as HTMLElement).dataset.tag;
+
+        if (currentPath === "/tags/") {
+          // タグページ内での遷移
+          e.preventDefault();
+          const currentHash = window.location.hash.slice(1);
+          if (currentHash === tag) return;
+          window.location.hash = tag || "";
+        }
+        // その他のページからの遷移は通常通り
+      });
+    });
+  }
+
+  // 初期化処理
+  setupTagLinks();
+  document.addEventListener("astro:page-load", setupTagLinks);
+</script>

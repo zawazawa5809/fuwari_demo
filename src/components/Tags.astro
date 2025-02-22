@@ -40,25 +40,21 @@ const tags = [
         e.preventDefault();
         const tag = (e.currentTarget as HTMLAnchorElement).dataset.tag || "";
 
-        // URLを更新
-        const href = (e.currentTarget as HTMLAnchorElement).href;
-        window.history.pushState(null, "", href);
-
-        // スムーズスクロールを開始
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-
-        // スクロールアニメーションが開始してから少し遅れてフィルタリングを実行
-        setTimeout(() => {
-          // カスタムイベントを発火
+        // タグページに遷移（#tag形式）
+        const tagPageUrl = `/tags/#${tag}`;
+        if (window.location.pathname !== "/tags/") {
+          // タグページ以外からの遷移の場合は、ページ遷移を行う
+          window.location.href = tagPageUrl;
+        } else {
+          // タグページ内での遷移の場合は、ハッシュのみ更新
+          window.history.pushState(null, "", tagPageUrl);
+          // フィルタリングイベントを発火
           window.dispatchEvent(
             new CustomEvent("timelineFilter", {
               detail: { filter: tag },
             })
           );
-        }, 300); // スクロールが始まってからフィルタリングを実行
+        }
       });
     });
   }

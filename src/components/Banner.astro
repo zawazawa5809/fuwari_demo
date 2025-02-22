@@ -1,6 +1,5 @@
 ---
 import { Image } from "astro:assets";
-import { BANNER_CONFIG } from "../config";
 
 interface Props {
   isHome?: boolean;
@@ -10,56 +9,36 @@ const { isHome = false } = Astro.props;
 ---
 
 <div class="banner-container">
-  {
-    BANNER_CONFIG.style === "image" ? (
-      <div class="relative h-[300px] md:h-[400px]">
-        <div class="skeleton-image absolute inset-0" />
-        <Image
-          src={BANNER_CONFIG.image}
-          alt=""
-          width={1920}
-          height={400}
-          class="w-full h-full object-cover"
-          loading={isHome ? "eager" : "lazy"}
-          decoding={isHome ? "sync" : "async"}
-          format="webp"
-          quality={80}
-        />
-        {isHome && (
-          <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
-            <h1 class="text-4xl md:text-5xl text-white font-display font-bold text-center px-4">
-              Welcome to My Blog
-            </h1>
-          </div>
-        )}
-      </div>
-    ) : (
-      <div
-        class="h-[300px] md:h-[400px] bg-gradient-to-r"
-        style={`--tw-gradient-from: ${BANNER_CONFIG.gradient.from}; --tw-gradient-to: ${BANNER_CONFIG.gradient.to};`}
-      >
-        {isHome && (
-          <div class="h-full flex items-center justify-center">
-            <h1 class="text-4xl md:text-5xl text-white font-display font-bold text-center px-4">
-              Welcome to My Blog
-            </h1>
-          </div>
-        )}
-      </div>
-    )
-  }
+  <div class="banner-image-wrapper">
+    <img
+      src="/images/banner.jpg"
+      alt="Banner"
+      class="banner-image"
+      width="1920"
+      height="400"
+      loading="eager"
+      decoding="sync"
+    />
+  </div>
+  <div class="skeleton-overlay"></div>
 </div>
 
 <style>
   .banner-container {
-    view-transition-name: banner;
-    transform-origin: top;
-    overflow: hidden;
+    @apply relative w-full h-48 overflow-hidden;
+    contain: layout;
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    .skeleton-image {
-      animation: non;
-    }
+  .banner-image-wrapper {
+    @apply absolute inset-0;
+  }
+
+  .banner-image {
+    @apply w-full h-full object-cover;
+  }
+
+  .skeleton-overlay {
+    @apply absolute inset-0 bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/10 dark:to-gray-900;
+    opacity: 0.7;
   }
 </style>
