@@ -117,54 +117,70 @@ const years = Object.keys(postsByYear)
       itemVisibility.set(item, shouldShow);
     });
 
-    // アニメーションを一括で適用
-    requestAnimationFrame(() => {
-      items.forEach((item) => {
-        const shouldShow = itemVisibility.get(item);
-        if (shouldShow) {
-          item.style.display = "";
-          item.style.opacity = "0";
-          requestAnimationFrame(() => {
-            item.style.transition = "opacity 0.2s ease-out";
-            item.style.opacity = "1";
-          });
-        } else {
-          item.style.transition = "opacity 0.2s ease-out";
-          item.style.opacity = "0";
-          setTimeout(() => {
-            if (!itemVisibility.get(item)) {
-              item.style.display = "none";
-            }
-          }, 200);
-        }
+    // アニメーションを一括で適用（遅延を追加）
+    setTimeout(() => {
+      requestAnimationFrame(() => {
+        items.forEach((item) => {
+          const shouldShow = itemVisibility.get(item);
+          if (shouldShow) {
+            item.style.display = "";
+            item.style.opacity = "0";
+            item.style.transform = "translateY(20px)";
+            requestAnimationFrame(() => {
+              item.style.transition =
+                "opacity 0.4s ease-out, transform 0.4s ease-out";
+              item.style.opacity = "1";
+              item.style.transform = "translateY(0)";
+            });
+          } else {
+            item.style.transition =
+              "opacity 0.4s ease-out, transform 0.4s ease-out";
+            item.style.opacity = "0";
+            item.style.transform = "translateY(20px)";
+            setTimeout(() => {
+              if (!itemVisibility.get(item)) {
+                item.style.display = "none";
+              }
+            }, 400);
+          }
+        });
+
+        // セクションの表示状態を更新
+        sections.forEach((section) => {
+          const sectionHasVisibleItems = Array.from(
+            section.querySelectorAll<TimelineItem>(".timeline-item")
+          ).some((item) => itemVisibility.get(item));
+
+          if (sectionHasVisibleItems) {
+            section.style.display = "";
+            section.style.opacity = "0";
+            section.style.transform = "translateY(20px)";
+            requestAnimationFrame(() => {
+              section.style.transition =
+                "opacity 0.4s ease-out, transform 0.4s ease-out";
+              section.style.opacity = "1";
+              section.style.transform = "translateY(0)";
+            });
+          } else {
+            section.style.transition =
+              "opacity 0.4s ease-out, transform 0.4s ease-out";
+            section.style.opacity = "0";
+            section.style.transform = "translateY(20px)";
+            setTimeout(() => {
+              if (
+                !Array.from(
+                  section.querySelectorAll<TimelineItem>(".timeline-item")
+                ).some((item) => itemVisibility.get(item))
+              ) {
+                section.style.display = "none";
+              }
+            }, 400);
+          }
+        });
+
+        isFiltering = false;
       });
-
-      // セクションの表示状態を更新
-      sections.forEach((section) => {
-        const sectionHasVisibleItems = Array.from(
-          section.querySelectorAll<TimelineItem>(".timeline-item")
-        ).some((item) => itemVisibility.get(item));
-
-        if (sectionHasVisibleItems) {
-          section.style.display = "";
-          section.style.opacity = "1";
-        } else {
-          section.style.transition = "opacity 0.2s ease-out";
-          section.style.opacity = "0";
-          setTimeout(() => {
-            if (
-              !Array.from(
-                section.querySelectorAll<TimelineItem>(".timeline-item")
-              ).some((item) => itemVisibility.get(item))
-            ) {
-              section.style.display = "none";
-            }
-          }, 200);
-        }
-      });
-
-      isFiltering = false;
-    });
+    }, 100); // フィルタリング処理の開始を少し遅延
   }
 
   // ハッシュの変更を監視してフィルタリングを実行
@@ -284,7 +300,7 @@ const years = Object.keys(postsByYear)
 
   /* アニメーション */
   .timeline-card {
-    animation: fade-in-up 0.5s ease-out;
+    animation: fade-in-up 0.4s ease-out;
   }
 
   @keyframes fade-in-up {

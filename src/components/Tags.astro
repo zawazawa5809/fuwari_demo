@@ -40,16 +40,25 @@ const tags = [
         e.preventDefault();
         const tag = (e.currentTarget as HTMLAnchorElement).dataset.tag || "";
 
-        // カスタムイベントを発火
-        window.dispatchEvent(
-          new CustomEvent("timelineFilter", {
-            detail: { filter: tag },
-          })
-        );
-
         // URLを更新
         const href = (e.currentTarget as HTMLAnchorElement).href;
         window.history.pushState(null, "", href);
+
+        // スムーズスクロールを開始
+        window.scrollTo({
+          top: 0,
+          behavior: "smooth",
+        });
+
+        // スクロールアニメーションが開始してから少し遅れてフィルタリングを実行
+        setTimeout(() => {
+          // カスタムイベントを発火
+          window.dispatchEvent(
+            new CustomEvent("timelineFilter", {
+              detail: { filter: tag },
+            })
+          );
+        }, 300); // スクロールが始まってからフィルタリングを実行
       });
     });
   }

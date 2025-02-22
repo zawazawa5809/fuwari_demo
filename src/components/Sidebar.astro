@@ -1,18 +1,21 @@
 ---
-import Profile from './Profile.astro';
-import Categories from './Categories.astro';
-import Tags from './Tags.astro';
+import Profile from "./Profile.astro";
+import Categories from "./Categories.astro";
+import Tags from "./Tags.astro";
+import { getCollection } from "astro:content";
+
+const posts = await getCollection("posts");
 ---
 
 <aside class="sidebar">
   <div class="sticky-container">
     <div class="profile">
-      <img src="/images/avatar.png" alt="Profile" class="profile-image">
+      <img src="/images/avatar.png" alt="Profile" class="profile-image" />
       <h2>Fuwari</h2>
       <p>Frontend developer.</p>
     </div>
-    <Categories />
-    <Tags />
+    <Categories posts={posts} />
+    <Tags posts={posts} />
   </div>
 </aside>
 
@@ -26,7 +29,7 @@ import Tags from './Tags.astro';
 
   .sticky-container {
     position: sticky;
-    top: 20px; /* Adjust as needed */
+    top: 2rem;
   }
 
   .profile {

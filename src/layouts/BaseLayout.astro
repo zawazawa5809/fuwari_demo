@@ -184,15 +184,18 @@ const {
     max-width: 90rem;
     margin: 0 auto;
     padding: 2rem 1rem;
+    min-height: calc(
+      100vh - var(--header-height) - var(--banner-height)
+    ); /* ヘッダーとバナーの高さを考慮 */
   }
 
   .sidebar {
     position: sticky;
     top: 2rem;
-    height: fit-content;
     background-color: var(--color-card);
     border-radius: 0.5rem;
     box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1);
+    padding: 1.25rem;
   }
 
   .left-sidebar .sidebar-content {

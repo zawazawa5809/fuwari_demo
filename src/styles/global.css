@@ -7,6 +7,7 @@
   --color-secondary: rgb(6 182 212);
   --transition-duration: 0.3s;
   --header-height: 4rem;
+  --banner-height: 12rem; /* バナーの実際の高さに応じて調整してください */
   --sidebar-width: 16rem;
   --page-transition-duration: 200ms; /* トランジション時間を短縮 */
 
@@ -150,11 +151,6 @@
     will-change: transform;
   }
 
-  .optimize-scroll {
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-  }
-
   /* アニメーションの最適化 */
   .slide-enter,
   .slide-exit {
@@ -222,10 +218,6 @@
 
   .optimize-gpu {
     @apply transform-gpu will-change-transform;
-  }
-
-  .optimize-scroll {
-    @apply overscroll-contain;
   }
 
   /* 画像最適化 */
