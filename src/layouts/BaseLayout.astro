@@ -31,6 +31,42 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta name="viewport" content="width=device-width" />
     <link rel="canonical" href={canonicalURL} />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- テーマの初期化スクリプト -->
+    <script is:inline>
+      // テーマの初期化をページ読み込み前に実行
+      (function () {
+        const theme =
+          localStorage.getItem("theme") ||
+          (window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light");
+
+        // クラスの追加/削除を即座に実行
+        document.documentElement.classList.toggle("dark", theme === "dark");
+
+        // テーマ変更のフラッシュを防ぐためにstyleを追加
+        const style = document.createElement("style");
+        style.textContent = `
+          :root { color-scheme: light dark; }
+          html.dark { color-scheme: dark; }
+          html { transition: none !important; }
+        `;
+        document.head.appendChild(style);
+
+        // DOMContentLoadedで遅延トランジションを有効化
+        document.addEventListener("DOMContentLoaded", () => {
+          setTimeout(() => {
+            style.textContent = `
+              :root { color-scheme: light dark; }
+              html.dark { color-scheme: dark; }
+              html { transition: background-color 0.2s ease-in-out; }
+            `;
+          }, 0);
+        });
+      })();
+    </script>
+
     <title>{title} - {SITE_CONFIG.title}</title>
     <ViewTransitions fallback="none" />
 
@@ -42,6 +78,14 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         const sidebar = document.querySelector(".sidebar-nav");
         if (banner) event.persist(banner);
         if (sidebar) event.persist(sidebar);
+      });
+
+      // テーマの永続化とページ遷移時の処理
+      document.addEventListener("astro:after-swap", () => {
+        const theme = localStorage.getItem("theme");
+        if (theme) {
+          document.documentElement.classList.toggle("dark", theme === "dark");
+        }
       });
     </script>
   </head>
@@ -135,6 +179,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 </script>
 
 <style is:global>
+  .body {
+    @apply min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900;
+    transition: background-color 0.2s ease-in-out;
+  }
+
   /* Base transitions */
   ::view-transition-old(root),
   ::view-transition-new(root) {
@@ -142,6 +191,39 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     mix-blend-mode: normal;
     transform: translateZ(0);
     will-change: transform;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* ダークモード切り替えの最適化 */
+  .header-wrapper,
+  .banner-wrapper,
+  aside,
+  main {
+    transition:
+      background-color 0.2s ease-in-out,
+      color 0.2s ease-in-out;
+    will-change: transform;
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+
+  /* Prevent flickering during transitions */
+  ::view-transition-group(*) {
+    animation: none !important;
+  }
+
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+    mix-blend-mode: normal !important;
+  }
+
+  /* Content transition */
+  main {
+    view-transition-name: main;
+    contain: style layout;
   }
 
   /* Fix layout shifts */
