@@ -46,7 +46,43 @@ export default defineConfig({
   image: {
     domains: ["example.com"],
     remotePatterns: [{ protocol: "https" }],
+    service: {
+      entrypoint: "astro/assets/services/sharp",
+    },
   },
 
-  vite: {},
+  assets: {
+    debug: true, // 開発時のデバッグを有効化
+    backgroundOptimization: true,
+  },
+
+  vite: {
+    build: {
+      assetsInlineLimit: 0,
+    },
+    optimizeDeps: {
+      exclude: ["@astrojs/image", "sharp"],
+    },
+  },
+
+  headers: {
+    "/images/*": [
+      {
+        key: "Cache-Control",
+        value: "public, max-age=31536000, immutable",
+      },
+    ],
+    "/favicon.svg": [
+      {
+        key: "Cache-Control",
+        value: "public, max-age=31536000, immutable",
+      },
+    ],
+  },
+
+  output: "static",
+  assets: true,
+  build: {
+    assets: "assets",
+  },
 });

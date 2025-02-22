@@ -1,6 +1,4 @@
 ---
-import { Image } from "astro:assets";
-
 interface Props {
   isHome?: boolean;
 }
@@ -8,7 +6,11 @@ interface Props {
 const { isHome = false } = Astro.props;
 ---
 
-<div class="banner-container">
+<div
+  class="banner-container w-full"
+  transition:persist
+  transition:name="banner"
+>
   <div class="banner-image-wrapper">
     <img
       src="/images/banner.jpg"
@@ -18,27 +20,82 @@ const { isHome = false } = Astro.props;
       height="400"
       loading="eager"
       decoding="sync"
+      fetchpriority="high"
     />
   </div>
-  <div class="skeleton-overlay"></div>
+  <div class="skeleton-overlay" transition:persist></div>
 </div>
 
 <style>
   .banner-container {
-    @apply relative w-full h-48 overflow-hidden;
-    contain: layout;
+    @apply relative h-48 overflow-hidden;
+    contain: layout size style;
+    isolation: isolate;
   }
 
   .banner-image-wrapper {
     @apply absolute inset-0;
+    z-index: 1;
   }
 
   .banner-image {
-    @apply w-full h-full object-cover;
+    @apply w-full h-48 object-cover;
+    display: block;
   }
 
   .skeleton-overlay {
     @apply absolute inset-0 bg-gradient-to-r from-primary-50 to-white dark:from-primary-900/10 dark:to-gray-900;
     opacity: 0.7;
+    z-index: 2;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .banner-container,
+    .banner-image-wrapper,
+    .banner-image,
+    .skeleton-overlay {
+      transition: none;
+      animation: none;
+      transform: none;
+    }
   }
 </style>
+
+<script>
+  // バナー画像の事前読み込みを最適化
+  const preloadBanner = () => {
+    // すでにプリロードリンクが存在する場合は作成しない
+    if (
+      !document.querySelector('link[rel="preload"][href="/images/banner.jpg"]')
+    ) {
+      const link = document.createElement("link");
+      link.rel = "preload";
+      link.as = "image";
+      link.href = "/images/banner.jpg";
+      link.fetchPriority = "high";
+      document.head.appendChild(link);
+    }
+  };
+
+  // 画像の事前読み込みを一度だけ実行
+  document.addEventListener("astro:page-load", preloadBanner, { once: true });
+
+  // View Transitions APIのサポートを最適化
+  let bannerElement: HTMLElement | null = null;
+
+  document.addEventListener("astro:before-swap", () => {
+    bannerElement = document.querySelector(".banner-container");
+    if (bannerElement) {
+      bannerElement.style.willChange = "transform";
+      bannerElement.style.transform = "translate3d(0, 0, 0)";
+    }
+  });
+
+  document.addEventListener("astro:after-swap", () => {
+    requestAnimationFrame(() => {
+      if (bannerElement) {
+        bannerElement.style.willChange = "auto";
+      }
+    });
+  });
+</script>

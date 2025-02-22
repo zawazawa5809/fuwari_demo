@@ -10,8 +10,8 @@ const categories = getTopics(posts, "category");
 const tags = getTopics(posts, "tag");
 ---
 
-<div class="sidebar-nav">
-  <div class="profile-image-wrapper" transition:persist>
+<div class="sidebar-nav" transition:persist>
+  <div class="profile-image-wrapper">
     <Image
       src={PROFILE_CONFIG.avatar}
       alt={PROFILE_CONFIG.name}
@@ -27,20 +27,23 @@ const tags = getTopics(posts, "tag");
   <nav class="nav-sections">
     <div class="nav-section">
       <h2 class="nav-title">Categories</h2>
-      <TopicList topics={categories} />
+      <TopicList topics={categories} transition:persist="categories" />
     </div>
 
     <div class="nav-section">
       <h2 class="nav-title">Tags</h2>
-      <TopicList topics={tags} />
+      <TopicList topics={tags} transition:persist="tags" />
     </div>
   </nav>
 </div>
 
 <style>
   .sidebar-nav {
-    @apply flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md;
+    @apply flex flex-col items-center p-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-md;
     width: 100%;
+    contain: content;
+    transform: translateZ(0);
+    will-change: transform;
   }
 
   .profile-image-wrapper {

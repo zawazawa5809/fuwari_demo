@@ -30,6 +30,7 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="canonical" href={canonicalURL} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} - {SITE_CONFIG.title}</title>
     <ViewTransitions fallback="none" />
 
@@ -46,18 +47,23 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   </head>
 
   <body class="bg-gray-50 dark:bg-gray-900">
-    <div class="relative min-h-screen flex flex-col overflow-x-hidden">
+    <div class="relative min-h-screen flex flex-col">
       <header
-        class="header-wrapper w-full sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-sm"
-        transition:persist="header"
+        class="header-wrapper w-full sticky top-0 z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm shadow-sm"
+        transition:persist
       >
         <div class="container mx-auto">
           <Header />
         </div>
       </header>
 
-      <div class="banner-wrapper w-full" transition:persist="banner">
-        <div class="container mx-auto">
+      <div
+        class="banner-wrapper w-full h-48"
+        transition:persist
+        transition:name="banner-wrapper"
+        style="contain: layout style paint size;"
+      >
+        <div class="container mx-auto h-full">
           <Banner isHome={isHome} />
         </div>
       </div>
@@ -67,16 +73,16 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
           <div class="flex flex-col lg:flex-row gap-8">
             <aside
               class="lg:w-64 lg:flex-shrink-0"
-              transition:persist="sidebar"
+              transition:persist
               style="contain: style layout;"
             >
-              <div class="lg:sticky lg:top-8">
+              <div class="lg:sticky lg:top-24">
                 <SidebarNav />
               </div>
             </aside>
             <main
               class="flex-1"
-              transition:animate="slide"
+              transition:animate="fade"
               style="contain: style layout;"
             >
               <slot />
@@ -160,10 +166,15 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 
   .banner-wrapper {
     view-transition-name: banner;
-    contain: layout style paint;
-    transform: translateZ(0);
+    contain: layout style paint size;
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000;
+    -webkit-perspective: 1000;
     will-change: transform;
     width: 100%;
+    z-index: 1;
   }
 
   #sidebar-wrapper {
@@ -180,6 +191,18 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     animation: none;
     mix-blend-mode: normal;
     transform: translateZ(0);
+  }
+
+  ::view-transition-group(banner) {
+    animation: none !important;
+    mix-blend-mode: normal !important;
+  }
+
+  ::view-transition-old(banner),
+  ::view-transition-new(banner) {
+    animation: none !important;
+    mix-blend-mode: normal !important;
+    pointer-events: none;
   }
 
   /* Content transition */
@@ -224,8 +247,28 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   }
 
   /* Performance optimizations */
+  .header-wrapper,
   .banner-wrapper,
   aside {
     content-visibility: auto;
+    contain: style layout paint;
+    transform: translateZ(0);
+    will-change: transform;
+  }
+
+  /* Force GPU acceleration */
+  .banner-wrapper,
+  .banner-container,
+  .banner-image-wrapper,
+  .banner-image {
+    -webkit-transform: translateZ(0);
+    -moz-transform: translateZ(0);
+    -ms-transform: translateZ(0);
+    -o-transform: translateZ(0);
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000;
+    -webkit-perspective: 1000;
   }
 </style>
