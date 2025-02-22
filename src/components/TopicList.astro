@@ -49,20 +49,30 @@ const { topics, selectedTopic } = Astro.props;
 </div>
 
 <script>
+  function clearActiveTopics() {
+    document.querySelectorAll(".topic-link").forEach((link) => {
+      link.classList.remove("bg-primary-500", "text-white");
+      link.classList.add("bg-gray-100", "dark:bg-gray-800");
+      const spans = link.querySelectorAll("span");
+      spans.forEach((span) => {
+        span.classList.remove("text-white");
+      });
+    });
+  }
+
   function initializeTopicLinks() {
+    clearActiveTopics();
     document.querySelectorAll(".topic-link").forEach((link) => {
       const topicType = (link as HTMLElement).dataset.topicType;
       const normalizedName = (link as HTMLElement).dataset.normalizedName;
 
       if (topicType === "tag" && normalizedName) {
-        // タグの場合は直接タグページにリダイレクト
         link.addEventListener("click", (e) => {
           e.preventDefault();
           window.location.href = `/tags/${normalizedName}`;
         });
       }
 
-      // アクティブ状態の設定
       const pathname = window.location.pathname;
       const href = (link as HTMLAnchorElement).href;
       const currentPath = new URL(href).pathname;

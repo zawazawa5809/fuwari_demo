@@ -30,44 +30,58 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width" />
     <link rel="canonical" href={canonicalURL} />
-    <title>{title} - {SITE_CONFIG.siteName}</title>
+    <title>{title} - {SITE_CONFIG.title}</title>
     <ViewTransitions fallback="none" />
 
     <script>
       // Persistent elements during page transitions
       document.addEventListener("astro:before-preparation", (e) => {
+        const event = e as unknown as App.BeforePreparationEvent;
         const banner = document.querySelector(".banner-container");
         const sidebar = document.querySelector(".sidebar-nav");
-        if (banner) e.persist(banner);
-        if (sidebar) e.persist(sidebar);
+        if (banner) event.persist(banner);
+        if (sidebar) event.persist(sidebar);
       });
     </script>
   </head>
 
   <body class="bg-gray-50 dark:bg-gray-900">
-    <div class="min-h-screen flex flex-col">
-      <div id="header-wrapper" class="header-wrapper" transition:persist>
-        <Header />
+    <div class="relative min-h-screen flex flex-col overflow-x-hidden">
+      <header
+        class="header-wrapper w-full sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-sm"
+        transition:persist="header"
+      >
+        <div class="container mx-auto">
+          <Header />
+        </div>
+      </header>
+
+      <div class="banner-wrapper w-full" transition:persist="banner">
+        <div class="container mx-auto">
+          <Banner isHome={isHome} />
+        </div>
       </div>
 
-      <div id="banner-wrapper" class="banner-wrapper" transition:persist>
-        <Banner isHome={isHome} />
-      </div>
-
-      <div class="container mx-auto px-4 py-8">
-        <div class="flex flex-col lg:flex-row gap-8">
-          <aside
-            id="sidebar-wrapper"
-            class="lg:w-64 lg:flex-shrink-0"
-            transition:persist
-          >
-            <div class="lg:sticky lg:top-8">
-              <SidebarNav />
-            </div>
-          </aside>
-          <main class="flex-1" transition:animate="slide">
-            <slot />
-          </main>
+      <div class="flex-1">
+        <div class="container mx-auto px-4 py-8">
+          <div class="flex flex-col lg:flex-row gap-8">
+            <aside
+              class="lg:w-64 lg:flex-shrink-0"
+              transition:persist="sidebar"
+              style="contain: style layout;"
+            >
+              <div class="lg:sticky lg:top-8">
+                <SidebarNav />
+              </div>
+            </aside>
+            <main
+              class="flex-1"
+              transition:animate="slide"
+              style="contain: style layout;"
+            >
+              <slot />
+            </main>
+          </div>
         </div>
       </div>
     </div>
@@ -75,31 +89,33 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 </html>
 
 <script>
+  // 永続要素の事前準備
   document.addEventListener("astro:before-preparation", (e) => {
     const event = e as unknown as App.BeforePreparationEvent;
-    const sidebar = document.querySelector(".sidebar-nav");
-    if (sidebar) {
-      event.persist(sidebar);
-    }
+    ["header", "banner-wrapper", "sidebar"].forEach((selector) => {
+      const element = document.querySelector(`.${selector}`);
+      if (element) event.persist(element);
+    });
   });
 
+  // ページ遷移後の処理
   document.addEventListener("astro:after-navigation", () => {
-    const main = document.querySelector("main") as HTMLElement;
+    const main = document.querySelector("main");
     if (main) {
       main.tabIndex = -1;
       main.focus({ preventScroll: true });
     }
 
-    window.scrollTo({
-      top: 0,
-      behavior: document.querySelector("[data-astro-transition]")
-        ? "auto"
-        : "smooth",
-    });
+    // スムーズスクロールの制御
+    if (!document.querySelector("[data-astro-transition]")) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 0 });
+    }
   });
 
+  // 画像の遅延ロード
   document.addEventListener("astro:page-load", () => {
-    // 画像の遅延ロード
     if ("loading" in HTMLImageElement.prototype) {
       document
         .querySelectorAll<HTMLImageElement>("img[loading='lazy']")
@@ -110,27 +126,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
         });
     }
   });
-
-  // 永続要素の事前準備
-  document.addEventListener("astro:before-preparation", (e) => {
-    const event = e as unknown as App.BeforePreparationEvent;
-    ["header-wrapper", "banner-wrapper", "sidebar-wrapper"].forEach((id) => {
-      const element = document.getElementById(id);
-      if (element) event.persist(element);
-    });
-  });
-
-  // ページ遷移後の処理
-  document.addEventListener("astro:after-swap", () => {
-    // 永続要素の表示を確実に維持
-    ["header-wrapper", "banner-wrapper", "sidebar-wrapper"].forEach((id) => {
-      const element = document.getElementById(id);
-      if (element) {
-        element.style.opacity = "1";
-        element.style.visibility = "visible";
-      }
-    });
-  });
 </script>
 
 <style is:global>
@@ -139,36 +134,66 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   ::view-transition-new(root) {
     animation: none;
     mix-blend-mode: normal;
+    transform: translateZ(0);
+    will-change: transform;
   }
 
-  /* Persistent elements */
-  .header-wrapper,
-  .banner-wrapper,
-  aside {
-    view-transition-name: persist;
-    contain: paint;
+  /* Fix layout shifts */
+  html,
+  body {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
   }
 
-  .sidebar-nav {
+  /* Persistent elements with fixed positioning */
+  .header-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    view-transition-name: header;
+    contain: layout style paint;
+    transform: translateZ(0);
+    will-change: transform;
+    width: 100%;
+  }
+
+  .banner-wrapper {
+    view-transition-name: banner;
+    contain: layout style paint;
+    transform: translateZ(0);
+    will-change: transform;
+    width: 100%;
+  }
+
+  #sidebar-wrapper {
     view-transition-name: sidebar;
-    contain: paint;
+    contain: layout style paint;
+    transform: translateZ(0);
+    will-change: transform;
   }
 
-  ::view-transition-group(persist) {
+  /* Prevent flickering and layout shifts during transitions */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
     animation: none;
+    mix-blend-mode: normal;
+    transform: translateZ(0);
   }
 
-  /* Content fade animation */
+  /* Content transition */
   main {
     view-transition-name: main;
+    contain: style layout;
   }
 
   ::view-transition-old(main) {
-    animation: fade-out 0.15s ease-out;
+    animation: fade-out 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   ::view-transition-new(main) {
-    animation: fade-in 0.15s ease-out;
+    animation: fade-in 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   @keyframes fade-out {
@@ -201,49 +226,6 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   /* Performance optimizations */
   .banner-wrapper,
   aside {
-    contain: layout style paint;
     content-visibility: auto;
-  }
-
-  /* 永続要素のトランジション */
-  .header-wrapper,
-  .banner-wrapper,
-  #sidebar-wrapper {
-    view-transition-name: persist;
-    contain: layout style paint;
-  }
-
-  ::view-transition-group(persist) {
-    animation: none;
-    mix-blend-mode: normal;
-  }
-
-  /* メインコンテンツのトランジション */
-  main {
-    view-transition-name: main;
-  }
-
-  ::view-transition-old(main),
-  ::view-transition-new(main) {
-    animation: none;
-    mix-blend-mode: normal;
-  }
-
-  /* パフォーマンス最適化 */
-  .header-wrapper,
-  .banner-wrapper,
-  #sidebar-wrapper {
-    will-change: transform;
-    backface-visibility: hidden;
-    transform: translateZ(0);
-  }
-
-  /* アクセシビリティ対応 */
-  @media (prefers-reduced-motion: reduce) {
-    ::view-transition-group(*),
-    ::view-transition-old(*),
-    ::view-transition-new(*) {
-      animation: none;
-    }
   }
 </style>
