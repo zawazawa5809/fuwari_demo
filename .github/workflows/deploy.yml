@@ -18,12 +18,23 @@ jobs:
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v4
-      - name: Install, build, and upload your site
-        uses: withastro/action@v1
+      - name: Setup PNPM
+        uses: pnpm/action-setup@v2
         with:
-          # path: . # リポジトリのルートディレクトリを使用する場合は必要ありません
-          node-version: 18 # Node.js のバージョンはプロジェクトに合わせて調整してください
-          package-manager: pnpm # 使用しているパッケージマネージャーに応じて変更してください
+          version: latest
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: "pnpm"
+      - name: Install dependencies
+        run: pnpm install
+      - name: Build site
+        run: pnpm build
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: dist
 
   deploy:
     needs: build
