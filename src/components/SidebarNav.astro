@@ -1,5 +1,7 @@
 ---
 import { getCollection } from "astro:content";
+import { PROFILE_CONFIG } from "../config";
+import { Image } from "astro:assets";
 
 // 全記事を取得してカテゴリーとタグの集計を行う
 const posts = await getCollection("posts");
@@ -45,7 +47,14 @@ const sortedTags = Object.entries(tags)
 ---
 
 <div class="sidebar-nav">
-  <img src="/images/avatar.png" alt="Profile" class="profile-image" />
+  <Image
+    src={PROFILE_CONFIG.avatar}
+    alt={PROFILE_CONFIG.name}
+    width={96}
+    height={96}
+    loading="eager"
+    class="profile-image"
+  />
 
   <nav class="nav-sections">
     <div class="nav-section">
@@ -73,7 +82,11 @@ const sortedTags = Object.entries(tags)
       <div class="tags-cloud">
         {
           sortedTags.map(({ tag, count }) => (
-            <a href={`/tags/${tag.toLowerCase()}`} class="tag-item">
+            <a
+              href={`/tags/${tag.toLowerCase()}`}
+              class="tag-item"
+              data-astro-prefetch
+            >
               <span class="tag-text">#{tag}</span>
               <span class="tag-count">({count})</span>
             </a>
@@ -133,35 +146,12 @@ const sortedTags = Object.entries(tags)
     @apply inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-700/50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors duration-200;
   }
 
-  .tag-text {
-    @apply text-sm;
-  }
-
   .tag-count {
     @apply text-xs text-gray-500 dark:text-gray-500;
   }
-</style>
 
-<script>
-  function updateActiveLinks() {
-    const currentPath = window.location.pathname;
-    const hash = window.location.hash.slice(1).toLowerCase();
-
-    // カテゴリーとタグのリンクを取得
-    const links = document.querySelectorAll(".nav-link, .tag-item");
-
-    links.forEach((link) => {
-      const href = (link as HTMLAnchorElement).getAttribute("href");
-      if (!href) return;
-
-      const [path, linkHash] = href.split("#");
-      const isActive = currentPath === path && (!hash || linkHash === hash);
-
-      link.classList.toggle("active", isActive);
-    });
+  .theme-toggle,
+  .login-button {
+    display: none; /* 不要なスタイルを非表示に */
   }
-
-  // 初期化時とハッシュ変更時にリンクの状態を更新
-  updateActiveLinks();
-  window.addEventListener("hashchange", updateActiveLinks);
-</script>
+</style>
