@@ -1,5 +1,5 @@
 ---
-import BaseLayout from './BaseLayout.astro';
+import BaseLayout from "./BaseLayout.astro";
 
 export interface Props {
   frontmatter: {
@@ -9,7 +9,7 @@ export interface Props {
     tags: string[];
   };
   url: string;
-  toc?: { id: string; text: string;}[];
+  toc?: { id: string; text: string; depth?: number }[];
 }
 
 const { frontmatter, url, toc } = Astro.props;
@@ -17,16 +17,62 @@ const { title, description, image, tags } = frontmatter;
 ---
 
 <BaseLayout title={title} description={description} image={image} toc={toc}>
-  <article class="prose dark:prose-invert">
-    <slot />
-  </article>
+  <div class="max-w-6xl mx-auto px-4 lg:px-8 relative">
+    <div class="lg:flex lg:gap-8">
+      {/* メインコンテンツ */}
+      <article class="prose dark:prose-invert lg:flex-1">
+        <slot />
+      </article>
+
+      {/* サイドバー */}
+      {
+        toc && toc.length > 0 && (
+          <aside class="hidden lg:block lg:w-64 shrink-0">
+            <div class="sticky top-24">
+              <h2 class="text-lg font-bold mb-4 text-gray-900 dark:text-gray-100">
+                目次
+              </h2>
+              <nav class="toc">
+                <ul class="space-y-2">
+                  {toc.map((heading) => (
+                    <li class={`toc-item depth-${heading.depth || 2}`}>
+                      <a
+                        href={`#${heading.id}`}
+                        class="block text-gray-600 dark:text-gray-400 hover:text-primary dark:hover:text-primary-400 py-1"
+                      >
+                        {heading.text}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
+          </aside>
+        )
+      }
+    </div>
+  </div>
 </BaseLayout>
 
 <style>
+  .toc-item {
+    @apply transition-colors;
+  }
+
+  .toc-item.depth-2 {
+    @apply pl-0;
+  }
+
+  .toc-item.depth-3 {
+    @apply pl-4;
+  }
+
+  .toc-item.depth-4 {
+    @apply pl-8;
+  }
+
   article {
-    max-width: 65ch;
-    margin: 0 auto;
-    padding: 0 1.5rem;
+    max-width: none;
   }
 
   :global(.prose) {
@@ -44,11 +90,71 @@ const { title, description, image, tags } = frontmatter;
     font-size: 1.8rem;
     margin-top: 2.5rem;
     margin-bottom: 1.5rem;
+    scroll-margin-top: 6rem;
   }
 
   :global(.prose h3) {
     font-size: 1.5rem;
     margin-top: 2rem;
     margin-bottom: 1rem;
+    scroll-margin-top: 6rem;
   }
 </style>
+
+<script>
+  function updateActiveHeading() {
+    const headings = Array.from(document.querySelectorAll("h2, h3, h4"));
+    const tocLinks = document.querySelectorAll(".toc a");
+
+    let currentHeading = headings[0];
+    const buffer = 100; // スクロール位置の余裕を持たせる
+
+    headings.forEach((heading) => {
+      const top = heading.getBoundingClientRect().top;
+      if (top < buffer) {
+        currentHeading = heading;
+      }
+    });
+
+    tocLinks.forEach((link) => {
+      const href = link.getAttribute("href");
+      const headingId = href?.slice(1);
+      if (headingId === currentHeading?.id) {
+        link.classList.add("text-primary", "font-medium");
+      } else {
+        link.classList.remove("text-primary", "font-medium");
+      }
+    });
+  }
+
+  // スクロール時に現在の見出しを更新
+  window.addEventListener("scroll", () => {
+    requestAnimationFrame(updateActiveHeading);
+  });
+
+  // 目次リンクのクリックイベントを処理
+  function initializeTocLinks() {
+    const tocLinks = document.querySelectorAll(".toc a");
+
+    tocLinks.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        const targetId = link.getAttribute("href")?.slice(1);
+        const target = document.getElementById(targetId || "");
+
+        if (target) {
+          target.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      });
+    });
+  }
+
+  // ページ読み込み時にリンクを初期化
+  document.addEventListener("astro:page-load", () => {
+    initializeTocLinks();
+    updateActiveHeading();
+  });
+</script>
