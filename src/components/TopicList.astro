@@ -1,0 +1,101 @@
+---
+import type { Topic } from "../types/Topic";
+import { normalizeTag } from "../utils/topics";
+
+interface Props {
+  topics: Topic[];
+  selectedTopic?: string | null;
+}
+
+const { topics, selectedTopic } = Astro.props;
+---
+
+<div class="topic-list">
+  <div class="flex flex-wrap gap-2">
+    {
+      topics.map((topic) => {
+        const normalizedName =
+          normalizeTag(topic.name) || topic.name.toLowerCase();
+        const href =
+          topic.type === "category"
+            ? `/categories/${normalizedName}`
+            : `/tags/${normalizedName}`;
+
+        return (
+          <a
+            href={href}
+            class:list={[
+              "topic-link",
+              "inline-flex items-center px-3 py-1 text-sm rounded-full",
+              "hover:bg-primary-100 dark:hover:bg-gray-700 transition-colors duration-200",
+              {
+                "bg-primary-500 text-white": selectedTopic === normalizedName,
+                "bg-gray-100 dark:bg-gray-800":
+                  selectedTopic !== normalizedName,
+              },
+            ]}
+            data-topic-type={topic.type}
+            data-topic-name={topic.name}
+            data-normalized-name={normalizedName}
+          >
+            {topic.type === "tag" && "#"}
+            {topic.name}
+            <span class="ml-2 text-sm opacity-75">({topic.count})</span>
+          </a>
+        );
+      })
+    }
+  </div>
+</div>
+
+<script>
+  function initializeTopicLinks() {
+    document.querySelectorAll(".topic-link").forEach((link) => {
+      const topicType = (link as HTMLElement).dataset.topicType;
+      const normalizedName = (link as HTMLElement).dataset.normalizedName;
+
+      if (topicType === "tag" && normalizedName) {
+        // タグの場合は直接タグページにリダイレクト
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          window.location.href = `/tags/${normalizedName}`;
+        });
+      }
+
+      // アクティブ状態の設定
+      const pathname = window.location.pathname;
+      const href = (link as HTMLAnchorElement).href;
+      const currentPath = new URL(href).pathname;
+
+      if (pathname === currentPath) {
+        link.classList.add("bg-primary-500", "text-white");
+        link.classList.remove("bg-gray-100", "dark:bg-gray-800");
+        const spans = link.querySelectorAll("span");
+        spans.forEach((span) => {
+          span.classList.add("text-white", "opacity-75");
+        });
+      }
+    });
+  }
+
+  // 初期化とページ遷移後の再初期化
+  initializeTopicLinks();
+  document.addEventListener("astro:page-load", initializeTopicLinks);
+</script>
+
+<style>
+  .topic-link {
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+  }
+
+  .topic-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .topic-link.active span {
+    @apply text-white opacity-75;
+  }
+</style>

@@ -2,48 +2,12 @@
 import { getCollection } from "astro:content";
 import { PROFILE_CONFIG } from "../config";
 import { Image } from "astro:assets";
+import TopicList from "./TopicList.astro";
+import { getTopics } from "../utils/topics";
 
-// 全記事を取得してカテゴリーとタグの集計を行う
 const posts = await getCollection("posts");
-
-// カテゴリーの集計
-const categories = posts.reduce(
-  (acc, post) => {
-    const category = post.data.category || "Uncategorized";
-    acc[category] = (acc[category] || 0) + 1;
-    return acc;
-  },
-  {} as Record<string, number>
-);
-
-// タグの集計（大文字小文字を正規化）
-const tags = posts.reduce(
-  (acc, post) => {
-    post.data.tags?.forEach((tag) => {
-      const normalizedTag = tag.toLowerCase();
-      if (!acc[normalizedTag]) {
-        acc[normalizedTag] = {
-          name: tag, // オリジナルの表記を保持
-          count: 0,
-        };
-      }
-      acc[normalizedTag].count++;
-    });
-    return acc;
-  },
-  {} as Record<string, { name: string; count: number }>
-);
-
-// カテゴリーとタグをそれぞれ記事数順にソート
-const sortedCategories = Object.entries(categories).sort(
-  ([, a], [, b]) => b - a
-);
-const sortedTags = Object.entries(tags)
-  .sort(([, a], [, b]) => b.count - a.count)
-  .map(([key, value]) => ({
-    tag: value.name,
-    count: value.count,
-  }));
+const categories = getTopics(posts, "category");
+const tags = getTopics(posts, "tag");
 ---
 
 <div class="sidebar-nav">
@@ -63,40 +27,12 @@ const sortedTags = Object.entries(tags)
   <nav class="nav-sections">
     <div class="nav-section">
       <h2 class="nav-title">Categories</h2>
-      <ul class="nav-list">
-        {
-          sortedCategories.map(([category, count]) => (
-            <li class="nav-item">
-              <a
-                href={`/categories/${category.toLowerCase()}`}
-                class="nav-link group"
-                data-astro-prefetch
-              >
-                <span class="nav-text">{category}</span>
-                <span class="nav-count">{count}</span>
-              </a>
-            </li>
-          ))
-        }
-      </ul>
+      <TopicList topics={categories} />
     </div>
 
     <div class="nav-section">
       <h2 class="nav-title">Tags</h2>
-      <div class="tags-cloud">
-        {
-          sortedTags.map(({ tag, count }) => (
-            <a
-              href={`/tags/#${tag.toLowerCase()}`}
-              class="tag-item"
-              data-tag={tag.toLowerCase()}
-            >
-              <span class="tag-text">#{tag}</span>
-              <span class="tag-count">({count})</span>
-            </a>
-          ))
-        }
-      </div>
+      <TopicList topics={tags} />
     </div>
   </nav>
 </div>
@@ -104,24 +40,15 @@ const sortedTags = Object.entries(tags)
 <style>
   .sidebar-nav {
     @apply flex flex-col items-center p-6 bg-white dark:bg-gray-800 rounded-lg shadow-md;
-    contain: paint;
+    width: 100%;
   }
 
   .profile-image-wrapper {
     @apply mb-6;
-    will-change: transform;
   }
 
   .profile-image {
     @apply w-24 h-24 rounded-full border-4 border-white dark:border-gray-700 shadow-md;
-    will-change: transform;
-  }
-
-  /* プロフィール画像のView Transition最適化 */
-  ::view-transition-old(profile),
-  ::view-transition-new(profile) {
-    animation: none;
-    mix-blend-mode: normal;
   }
 
   .nav-sections {
@@ -135,76 +62,4 @@ const sortedTags = Object.entries(tags)
   .nav-title {
     @apply text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200;
   }
-
-  .nav-list {
-    @apply space-y-2;
-  }
-
-  .nav-item {
-    @apply w-full;
-  }
-
-  .nav-link {
-    @apply flex justify-between items-center p-2 rounded-md text-gray-600 hover:text-primary-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-primary-400 dark:hover:bg-gray-700/50 transition-colors duration-200;
-  }
-
-  .nav-text {
-    @apply text-sm;
-  }
-
-  .nav-count {
-    @apply text-xs text-gray-500 dark:text-gray-500;
-  }
-
-  .tags-cloud {
-    @apply flex flex-wrap gap-2;
-  }
-
-  .tag-item {
-    @apply inline-flex items-center gap-1 px-3 py-1 text-sm rounded-full 
-           bg-gray-100 hover:bg-primary-100 dark:bg-gray-800/50 dark:hover:bg-gray-700 
-           text-gray-700 dark:text-gray-300 transition-all duration-200;
-
-    &:hover {
-      transform: translateY(-1px);
-    }
-
-    &:active {
-      transform: translateY(0);
-    }
-  }
-
-  .tag-count {
-    @apply text-xs text-gray-500 dark:text-gray-500;
-  }
-
-  .theme-toggle,
-  .login-button {
-    display: none; /* 不要なスタイルを非表示に */
-  }
 </style>
-
-<script>
-  function setupTagLinks() {
-    const tagLinks = document.querySelectorAll(".tag-item");
-    tagLinks.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        const currentPath = window.location.pathname;
-        const tag = (e.currentTarget as HTMLElement).dataset.tag;
-
-        if (currentPath === "/tags/") {
-          // タグページ内での遷移
-          e.preventDefault();
-          const currentHash = window.location.hash.slice(1);
-          if (currentHash === tag) return;
-          window.location.hash = tag || "";
-        }
-        // その他のページからの遷移は通常通り
-      });
-    });
-  }
-
-  // 初期化処理
-  setupTagLinks();
-  document.addEventListener("astro:page-load", setupTagLinks);
-</script>

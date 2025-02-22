@@ -30,9 +30,8 @@ export default defineConfig({
   },
 
   viewTransitions: {
-    animate: "slide",
-    fallback: "animate",
-    handleForms: true,
+    animate: "none",
+    fallback: true,
   },
 
   prefetch: {

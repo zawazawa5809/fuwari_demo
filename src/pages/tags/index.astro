@@ -2,6 +2,7 @@
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import TimelineLayout from "../../layouts/TimelineLayout.astro";
 import { getCollection } from "astro:content";
+import { normalizeTag, findOriginalTag, getTagPosts } from "../../utils/topics";
 
 const posts = await getCollection("posts");
 
@@ -9,10 +10,12 @@ const posts = await getCollection("posts");
 const tags = posts.reduce(
   (acc, post) => {
     post.data.tags?.forEach((tag) => {
-      const normalizedTag = tag.toLowerCase();
+      const normalizedTag = normalizeTag(tag);
+      if (!normalizedTag) return;
+
       if (!acc[normalizedTag]) {
         acc[normalizedTag] = {
-          name: tag,
+          name: tag, // オリジナルのケースを保持
           posts: [],
         };
       }
@@ -24,11 +27,10 @@ const tags = posts.reduce(
 );
 
 // 選択されたタグの投稿を取得
-const currentTag = Astro.url.hash.slice(1).toLowerCase();
-const selectedTagPosts = currentTag
-  ? tags[currentTag]?.posts.sort(
-      (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-    )
+const currentTag = Astro.url.hash.slice(1);
+const normalizedCurrentTag = normalizeTag(currentTag);
+const selectedTagPosts = normalizedCurrentTag
+  ? getTagPosts(posts, normalizedCurrentTag)
   : posts.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
 // クライアントサイドでの使用のための変数
@@ -45,7 +47,9 @@ const initialPosts = selectedTagPosts.map((post) => ({
 ---
 
 <BaseLayout
-  title={currentTag ? `#${tags[currentTag]?.name || currentTag}` : "All Posts"}
+  title={normalizedCurrentTag
+    ? `#${tags[normalizedCurrentTag]?.name || currentTag}`
+    : "All Tags"}
 >
   <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1
@@ -53,7 +57,11 @@ const initialPosts = selectedTagPosts.map((post) => ({
       class="text-3xl font-bold text-center mb-8 text-slate-900 dark:text-slate-100"
       transition:name="page-title"
     >
-      {currentTag ? `#${tags[currentTag]?.name || currentTag}` : "All Posts"}
+      {
+        normalizedCurrentTag
+          ? `#${tags[normalizedCurrentTag]?.name || currentTag}`
+          : "All Tags"
+      }
     </h1>
 
     <div
@@ -69,78 +77,13 @@ const initialPosts = selectedTagPosts.map((post) => ({
 
 <script define:vars={{ tags, initialPosts }}>
   let isTransitioning = false;
-
-  // タイムラインコンテンツ更新時のトランジション時間
   const TRANSITION_DURATION = 150;
 
-  function generateTimelineHTML(posts) {
-    // 投稿を年ごとにグループ化
-    const postsByYear = posts.reduce((acc, post) => {
-      const year = new Date(post.data.pubDate).getFullYear();
-      if (!acc[year]) acc[year] = [];
-      acc[year].push(post);
-      return acc;
-    }, {});
-
-    // 年ごとのセクションを生成
-    return Object.entries(postsByYear)
-      .sort(([a], [b]) => Number(b) - Number(a))
-      .map(
-        ([year, yearPosts]) => `
-        <div class="year-section relative pl-8 sm:pl-32 py-6" data-year="${year}">
-          <div class="year-label text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">${year}</div>
-          <div class="timeline-items">
-            ${yearPosts
-              .map(
-                (post) => `
-              <div class="timeline-item group relative mb-8 last:mb-0">
-                <div class="timeline-stem absolute left-0 sm:left-[8.5rem] h-full w-[3px] bg-primary-200 dark:bg-primary-800/30 group-last:h-6"></div>
-                <div class="timeline-dot absolute left-[-5px] sm:left-32 rounded-full bg-primary-500 border-4 border-white dark:border-gray-900 w-3 h-3 mt-1.5"></div>
-                <div class="timeline-content relative flex flex-col sm:flex-row items-start mb-3">
-                  <time class="timeline-date sm:absolute left-[-8rem] text-sm text-gray-600 dark:text-gray-400">
-                    ${new Date(post.data.pubDate).toLocaleDateString()}
-                  </time>
-                  <div class="timeline-card bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 w-full transition-all duration-300 ease-in-out hover:shadow-lg">
-                    ${
-                      post.data.category
-                        ? `
-                      <div class="flex items-center gap-2 mb-2">
-                        <span class="category-label inline-block px-2 py-1 text-xs text-white bg-primary-500 rounded-md">
-                          ${post.data.category}
-                        </span>
-                      </div>
-                    `
-                        : ""
-                    }
-                    <h3 class="timeline-title text-lg font-semibold mb-2">
-                      <a href="/posts/${post.slug}/" 
-                         class="hover:text-primary-500 transition-colors dark:text-gray-100 dark:hover:text-primary-400">
-                        ${post.data.title}
-                      </a>
-                    </h3>
-                    ${
-                      post.data.description
-                        ? `
-                      <p class="timeline-description text-gray-600 dark:text-gray-400 text-sm">
-                        ${post.data.description}
-                      </p>
-                    `
-                        : ""
-                    }
-                  </div>
-                </div>
-              </div>
-            `
-              )
-              .join("")}
-          </div>
-        </div>
-      `
-      )
-      .join("");
+  function normalizeTag(tag) {
+    return tag ? tag.toLowerCase().trim() : null;
   }
 
-  async function updateContent(tag) {
+  function updateContent(tag) {
     if (isTransitioning) return;
     isTransitioning = true;
 
@@ -155,40 +98,47 @@ const initialPosts = selectedTagPosts.map((post) => ({
       title.style.opacity = "0";
       title.style.transform = "translateY(-5px)";
 
-      await new Promise((resolve) => setTimeout(resolve, TRANSITION_DURATION));
+      // トランジション時間を待つ
+      setTimeout(() => {
+        const normalizedTag = normalizeTag(tag);
+        // タイトルを更新
+        title.textContent = tag
+          ? `#${tags[normalizedTag]?.name || tag}`
+          : "All Tags";
 
-      // タイトルを更新
-      title.textContent = tag ? `#${tags[tag]?.name || tag}` : "All Posts";
+        // フィルタリングして並び替え
+        const filteredPosts = tag
+          ? initialPosts.filter((post) =>
+              post.data.tags?.some((t) => normalizeTag(t) === normalizedTag)
+            )
+          : initialPosts;
 
-      // フィルタリングして並び替え
-      const filteredPosts = tag
-        ? initialPosts.filter((post) =>
-            post.data.tags?.some((t) => t.toLowerCase() === tag.toLowerCase())
-          )
-        : initialPosts;
+        const sortedPosts = filteredPosts.sort(
+          (a, b) =>
+            new Date(b.data.pubDate).valueOf() -
+            new Date(a.data.pubDate).valueOf()
+        );
 
-      const sortedPosts = filteredPosts.sort(
-        (a, b) =>
-          new Date(b.data.pubDate).valueOf() -
-          new Date(a.data.pubDate).valueOf()
-      );
+        // タイムラインを更新
+        const timeline = document.querySelector(".timeline-container");
+        if (timeline) {
+          timeline.innerHTML = generateTimelineHTML(sortedPosts);
+        }
 
-      // コンテンツを更新
-      wrapper.innerHTML = generateTimelineHTML(sortedPosts);
-
-      // フェードイン
-      requestAnimationFrame(() => {
-        wrapper.style.opacity = "1";
-        wrapper.style.transform = "translateY(0)";
-        title.style.opacity = "1";
-        title.style.transform = "translateY(0)";
-      });
+        // フェードイン
+        requestAnimationFrame(() => {
+          wrapper.style.opacity = "1";
+          wrapper.style.transform = "translateY(0)";
+          title.style.opacity = "1";
+          title.style.transform = "translateY(0)";
+        });
+      }, TRANSITION_DURATION);
     } catch (error) {
       console.error("Error updating content:", error);
     } finally {
       setTimeout(() => {
         isTransitioning = false;
-      }, TRANSITION_DURATION);
+      }, TRANSITION_DURATION * 2);
     }
   }
 
@@ -207,6 +157,7 @@ const initialPosts = selectedTagPosts.map((post) => ({
     }
   }
 
+  // イベントリスナーの設定
   document.addEventListener("astro:page-load", initializeContent);
   window.addEventListener("hashchange", () => {
     const tag = window.location.hash.slice(1);
@@ -254,7 +205,7 @@ const initialPosts = selectedTagPosts.map((post) => ({
     }
 
     .year-section {
-      padding-left: 3rem !重要;
+      padding-left: 3rem !important;
     }
   }
 </style>

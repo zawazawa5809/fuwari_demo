@@ -77,17 +77,10 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 <script>
   document.addEventListener("astro:before-preparation", (e) => {
     const event = e as unknown as App.BeforePreparationEvent;
-    const elements = [
-      "header",
-      ".banner-container",
-      ".left-sidebar",
-      ".right-sidebar",
-      "footer",
-    ].map((selector) => document.querySelector(selector));
-
-    elements.forEach((el) => {
-      if (el) event.persist(el);
-    });
+    const sidebar = document.querySelector(".sidebar-nav");
+    if (sidebar) {
+      event.persist(sidebar);
+    }
   });
 
   document.addEventListener("astro:after-navigation", () => {
@@ -153,6 +146,11 @@ const canonicalURL = new URL(Astro.url.pathname, Astro.site);
   .banner-wrapper,
   aside {
     view-transition-name: persist;
+    contain: paint;
+  }
+
+  .sidebar-nav {
+    view-transition-name: sidebar;
     contain: paint;
   }
 

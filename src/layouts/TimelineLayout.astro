@@ -2,12 +2,15 @@
 import type { CollectionEntry } from "astro:content";
 import FormattedDate from "../components/FormattedDate.astro";
 import CategoryLabel from "../components/CategoryLabel.astro";
+import type { TopicFilter } from "../types/Topic";
+import { filterPostsByTopic } from "../utils/topics";
 
 interface Props {
   posts: CollectionEntry<"posts">[];
+  initialFilter?: TopicFilter;
 }
 
-const { posts } = Astro.props;
+const { posts, initialFilter } = Astro.props;
 
 const postsByYear = posts.reduce(
   (acc, post) => {
@@ -76,21 +79,16 @@ const years = Object.keys(postsByYear)
 </div>
 
 <script>
-  interface TimelineItem extends HTMLElement {
-    dataset: {
-      category: string;
-      tags: string;
-    };
-  }
+  import type { TopicFilter } from "../types/Topic";
 
-  let currentFilter = "";
+  let currentFilter: TopicFilter | null = null;
   let isFiltering = false;
 
-  function filterTimelineItems(filter: string) {
+  function filterTimelineItems(filter: TopicFilter | null) {
     if (isFiltering) return;
     isFiltering = true;
 
-    const items = document.querySelectorAll<TimelineItem>(".timeline-item");
+    const items = document.querySelectorAll<HTMLElement>(".timeline-item");
     const sections = document.querySelectorAll<HTMLElement>(".year-section");
 
     if (!items.length || !sections.length) {
@@ -98,135 +96,63 @@ const years = Object.keys(postsByYear)
       return;
     }
 
-    const normalizedFilter = filter.toLowerCase();
-
-    // すべてのアイテムの表示状態を一度に計算
-    const itemVisibility = new Map<TimelineItem, boolean>();
     items.forEach((item) => {
-      const category = (item.dataset.category || "").toLowerCase();
-      const tags = (item.dataset.tags || "")
-        .split(",")
-        .map((tag) => tag.toLowerCase())
-        .filter(Boolean);
+      let shouldShow = true;
+      if (filter) {
+        const itemCategory = item.dataset.category || "";
+        const itemTags = (item.dataset.tags || "").split(",").filter(Boolean);
 
-      const shouldShow =
-        !normalizedFilter ||
-        category === normalizedFilter ||
-        tags.includes(normalizedFilter);
+        if (filter.type === "category") {
+          shouldShow = itemCategory === filter.value;
+        } else {
+          shouldShow = itemTags.some((tag) => tag === filter.value);
+        }
+      }
 
-      itemVisibility.set(item, shouldShow);
+      if (shouldShow) {
+        item.style.display = "";
+        item.style.opacity = "1";
+        item.style.transform = "translateY(0)";
+      } else {
+        item.style.display = "none";
+        item.style.opacity = "0";
+        item.style.transform = "translateY(20px)";
+      }
     });
 
-    // アニメーションを一括で適用（遅延を追加）
-    setTimeout(() => {
-      requestAnimationFrame(() => {
-        items.forEach((item) => {
-          const shouldShow = itemVisibility.get(item);
-          if (shouldShow) {
-            item.style.display = "";
-            item.style.opacity = "0";
-            item.style.transform = "translateY(20px)";
-            requestAnimationFrame(() => {
-              item.style.transition =
-                "opacity 0.4s ease-out, transform 0.4s ease-out";
-              item.style.opacity = "1";
-              item.style.transform = "translateY(0)";
-            });
-          } else {
-            item.style.transition =
-              "opacity 0.4s ease-out, transform 0.4s ease-out";
-            item.style.opacity = "0";
-            item.style.transform = "translateY(20px)";
-            setTimeout(() => {
-              if (!itemVisibility.get(item)) {
-                item.style.display = "none";
-              }
-            }, 400);
-          }
-        });
+    // 年セクションの表示/非表示を更新
+    sections.forEach((section) => {
+      const hasVisibleItems = Array.from(
+        section.querySelectorAll<HTMLElement>(".timeline-item")
+      ).some((item) => item.style.display !== "none");
 
-        // セクションの表示状態を更新
-        sections.forEach((section) => {
-          const sectionHasVisibleItems = Array.from(
-            section.querySelectorAll<TimelineItem>(".timeline-item")
-          ).some((item) => itemVisibility.get(item));
+      section.style.display = hasVisibleItems ? "" : "none";
+      section.style.opacity = hasVisibleItems ? "1" : "0";
+      section.style.transform = hasVisibleItems
+        ? "translateY(0)"
+        : "translateY(20px)";
+    });
 
-          if (sectionHasVisibleItems) {
-            section.style.display = "";
-            section.style.opacity = "0";
-            section.style.transform = "translateY(20px)";
-            requestAnimationFrame(() => {
-              section.style.transition =
-                "opacity 0.4s ease-out, transform 0.4s ease-out";
-              section.style.opacity = "1";
-              section.style.transform = "translateY(0)";
-            });
-          } else {
-            section.style.transition =
-              "opacity 0.4s ease-out, transform 0.4s ease-out";
-            section.style.opacity = "0";
-            section.style.transform = "translateY(20px)";
-            setTimeout(() => {
-              if (
-                !Array.from(
-                  section.querySelectorAll<TimelineItem>(".timeline-item")
-                ).some((item) => itemVisibility.get(item))
-              ) {
-                section.style.display = "none";
-              }
-            }, 400);
-          }
-        });
-
-        isFiltering = false;
-      });
-    }, 100); // フィルタリング処理の開始を少し遅延
+    isFiltering = false;
   }
 
-  // ハッシュの変更を監視してフィルタリングを実行
-  function handleHashChange() {
-    const hash = window.location.hash.slice(1);
-    filterTimelineItems(hash);
-  }
-
-  function initializeFiltering() {
-    const hash = window.location.hash.slice(1);
-    filterTimelineItems(hash);
-  }
-
-  // 初期表示時とページ遷移時の処理
-  document.addEventListener("DOMContentLoaded", () => {
-    requestAnimationFrame(initializeFiltering);
-  });
-
-  document.addEventListener("astro:after-swap", () => {
-    requestAnimationFrame(initializeFiltering);
-  });
-
-  document.addEventListener("astro:page-load", () => {
-    requestAnimationFrame(initializeFiltering);
-  });
-
-  window.addEventListener("hashchange", () => {
-    requestAnimationFrame(handleHashChange);
-  });
-
-  function handleFilterChange(newFilter: string) {
-    if (newFilter !== currentFilter) {
-      currentFilter = newFilter;
-      filterTimelineItems(newFilter);
-    }
-  }
-
-  // Custom event handler for timeline filtering
-  window.addEventListener("timelineFilter", ((e: CustomEvent) => {
-    const newFilter = e.detail.filter;
-    if (newFilter !== currentFilter) {
-      currentFilter = newFilter;
-      window.location.hash = newFilter; // URLハッシュを更新
-      filterTimelineItems(newFilter);
-    }
+  // トピックフィルターイベントのリスナー
+  window.addEventListener("topicFilter", ((event: CustomEvent<TopicFilter>) => {
+    console.log("Topic filter event received:", event.detail); // デバッグ用
+    currentFilter = event.detail;
+    filterTimelineItems(currentFilter);
   }) as EventListener);
+
+  // 初期フィルターの適用
+  document.addEventListener("astro:page-load", () => {
+    const initialFilter = (window as any).initialTopicFilter;
+    if (initialFilter) {
+      console.log("Applying initial filter:", initialFilter); // デバッグ用
+      setTimeout(() => {
+        filterTimelineItems(initialFilter);
+      }, 100);
+    }
+  });
 </script>
 
 <style>
@@ -242,7 +168,9 @@ const years = Object.keys(postsByYear)
 
   .timeline-item {
     @apply relative mb-8 last:mb-0;
-    transition: opacity 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
+    transform: translateY(0);
+    opacity: 1;
   }
 
   .timeline-stem {
@@ -316,5 +244,12 @@ const years = Object.keys(postsByYear)
 
   .hidden {
     display: none !important;
+  }
+
+  .timeline-item,
+  .year-section {
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
   }
 </style>

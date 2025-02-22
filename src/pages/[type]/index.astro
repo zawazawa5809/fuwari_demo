@@ -1,0 +1,95 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TimelineLayout from "../../layouts/TimelineLayout.astro";
+import { getCollection } from "astro:content";
+import { getTopics } from "../../utils/topics";
+
+export async function getStaticPaths() {
+  return [
+    { params: { type: "categories" }, props: { type: "category" } },
+    { params: { type: "tags" }, props: { type: "tag" } },
+  ];
+}
+
+const { type } = Astro.props;
+const posts = await getCollection("posts");
+const topics = getTopics(posts, type);
+---
+
+<BaseLayout title={type === "tag" ? "Tags" : "Categories"}>
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1
+      class="text-3xl font-bold text-center mb-8 text-slate-900 dark:text-slate-100"
+    >
+      {type === "tag" ? "Tags" : "Categories"}
+    </h1>
+
+    <div class="mb-8">
+      <a
+        href="#"
+        class="topic-link inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+        data-topic-type={type}
+        data-topic-name=""
+      >
+        <span class="text-gray-700 dark:text-gray-300">All</span>
+        <span class="ml-2 text-gray-500 dark:text-gray-500"
+          >({posts.length})</span
+        >
+      </a>
+    </div>
+
+    <div class="mb-8 flex flex-wrap gap-2">
+      {
+        topics.map(({ name, count }) => (
+          <a
+            href={`/${type}s/${name.toLowerCase()}`}
+            class="topic-link inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
+            data-topic-type={type}
+            data-topic-name={name.toLowerCase()}
+          >
+            <span class="text-gray-700 dark:text-gray-300">
+              {type === "tag" && "#"}
+              {name}
+            </span>
+            <span class="ml-2 text-gray-500 dark:text-gray-500">({count})</span>
+          </a>
+        ))
+      }
+    </div>
+
+    <TimelineLayout posts={posts} />
+  </div>
+</BaseLayout>
+
+<script>
+  function setupTopicLinks() {
+    const links = document.querySelectorAll<HTMLElement>(".topic-link");
+    links.forEach((link) => {
+      link.addEventListener("click", (e) => {
+        // クリック時のデフォルト動作を許可し、通常のページ遷移を行う
+        const name = link.dataset.topicName;
+        const type = link.dataset.topicType;
+        if (!name) {
+          e.preventDefault();
+          // "All" リンクの場合は現在のページをリロード
+          window.location.reload();
+        }
+      });
+    });
+  }
+
+  // 初期化
+  setupTopicLinks();
+  document.addEventListener("astro:page-load", setupTopicLinks);
+</script>
+
+<style>
+  .topic-link {
+    transition: all 0.3s ease;
+  }
+
+  .topic-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+</style>

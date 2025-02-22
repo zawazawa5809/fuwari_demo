@@ -42,7 +42,7 @@ const sortedCategories = Object.values(categories).sort(
 
     <div class="mb-8 flex flex-wrap gap-2">
       <a
-        href="#"
+        href="/categories"
         class="category-link inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
         data-category=""
       >
@@ -54,7 +54,7 @@ const sortedCategories = Object.values(categories).sort(
       {
         sortedCategories.map(({ name, count }) => (
           <a
-            href={`#${name.toLowerCase()}`}
+            href={`/categories/${name.toLowerCase()}`}
             class="category-link inline-flex items-center px-3 py-1 text-sm bg-gray-100 dark:bg-gray-800 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors duration-200"
             data-category={name.toLowerCase()}
           >
@@ -71,13 +71,13 @@ const sortedCategories = Object.values(categories).sort(
 
 <script>
   function updateActiveCategory() {
-    const hash = window.location.hash.slice(1).toLowerCase();
+    const path = window.location.pathname;
+    const category = path.split("/categories/")[1] || "";
     const categoryLinks = document.querySelectorAll(".category-link");
 
     categoryLinks.forEach((link) => {
-      const linkCategory =
-        (link as HTMLElement).dataset.category?.toLowerCase() || "";
-      const isActive = linkCategory === hash;
+      const linkCategory = (link as HTMLElement).dataset.category || "";
+      const isActive = linkCategory === category;
 
       if (isActive) {
         link.classList.add("active", "bg-primary-500");
@@ -98,29 +98,11 @@ const sortedCategories = Object.values(categories).sort(
         });
       }
     });
-
-    // Dispatch event for timeline filtering
-    window.dispatchEvent(
-      new CustomEvent("timelineFilter", { detail: { filter: hash } })
-    );
   }
 
-  // Handle category link clicks
-  document.querySelectorAll(".category-link").forEach((link) => {
-    link.addEventListener("click", (e) => {
-      e.preventDefault();
-      const href =
-        (e.currentTarget as HTMLAnchorElement).getAttribute("href") || "#";
-      if (href !== window.location.hash) {
-        history.pushState(null, "", href);
-        updateActiveCategory();
-      }
-    });
-  });
-
-  // Initial state and hash change handling
-  window.addEventListener("load", updateActiveCategory);
-  window.addEventListener("hashchange", updateActiveCategory);
+  // 初期化とページ遷移時の処理
+  updateActiveCategory();
+  document.addEventListener("astro:page-load", updateActiveCategory);
 </script>
 
 <style>

@@ -1,0 +1,18 @@
+---
+import { getCollection } from "astro:content";
+
+// カテゴリーのインデックスページのみを処理
+export async function getStaticPaths() {
+  return [{ params: { type: "categories", topic: "index" } }];
+}
+
+// インデックスページへのリダイレクト処理
+const { type, topic } = Astro.params;
+
+if (topic === "index") {
+  return Astro.redirect(`/${type}/`);
+}
+
+// その他のパスは404へリダイレクト
+return Astro.redirect("/404");
+---

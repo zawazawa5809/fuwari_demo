@@ -1,9 +1,110 @@
 ---
-// タグページへのアクセスを /tags/#tag 形式にリダイレクト
-export const prerender = false;
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import TimelineLayout from "../../layouts/TimelineLayout.astro";
+import type { TopicFilter } from "../../types/Topic";
+import { normalizeTag, findOriginalTag, getTagPosts } from "../../utils/topics";
 
-export async function GET({ params, redirect }) {
-  const tag = params.tag;
-  return redirect(`/tags/#${tag.toLowerCase()}`);
+export const prerender = true;
+
+export async function getStaticPaths() {
+  const posts = await getCollection("posts");
+  const tagsMap = new Map<
+    string,
+    { name: string; count: number; posts: any[] }
+  >();
+
+  // すべてのタグを収集
+  posts.forEach((post) => {
+    post.data.tags?.forEach((tag) => {
+      if (!tag) return;
+      const normalizedTag = normalizeTag(tag);
+      if (!normalizedTag) return;
+
+      if (!tagsMap.has(normalizedTag)) {
+        tagsMap.set(normalizedTag, {
+          name: tag, // オリジナルの大文字小文字を保持
+          count: 0,
+          posts: [],
+        });
+      }
+
+      const tagData = tagsMap.get(normalizedTag)!;
+      tagData.count++;
+      tagData.posts.push(post);
+    });
+  });
+
+  // インデックスページ用のパスを追加
+  const paths = [
+    {
+      params: { tag: "index" },
+      props: {
+        isIndex: true,
+        posts: posts.sort(
+          (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+        ),
+      },
+    },
+  ];
+
+  // 各タグのパスを追加
+  paths.push(
+    ...Array.from(tagsMap.entries()).map(
+      ([normalizedTag, { name, posts }]) => ({
+        params: { tag: normalizedTag },
+        props: {
+          tag: name,
+          posts: posts.sort(
+            (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+          ),
+          normalizedTag,
+          exists: true,
+          isIndex: false,
+        },
+      })
+    )
+  );
+
+  return paths;
 }
+
+interface Props {
+  tag?: string;
+  posts: any[];
+  normalizedTag?: string;
+  exists?: boolean;
+  isIndex: boolean;
+}
+
+const { tag, posts, normalizedTag, exists, isIndex } = Astro.props;
+
+// インデックスページへのリダイレクト
+if (isIndex) {
+  return Astro.redirect("/tags/");
+}
+
+// タグが不正な場合は404へ
+if (!exists || !tag || !normalizedTag || posts.length === 0) {
+  return Astro.redirect("/404");
+}
+
+const initialFilter: TopicFilter = {
+  type: "tag",
+  value: normalizedTag,
+};
 ---
+
+<BaseLayout title={`Tag: #${tag}`}>
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <h1 class="text-3xl font-bold mb-8 text-slate-900 dark:text-slate-100">
+      #{tag}
+      <span class="text-lg font-normal text-gray-600 dark:text-gray-400 ml-2">
+        ({posts.length}
+        {posts.length === 1 ? "post" : "posts"})
+      </span>
+    </h1>
+
+    <TimelineLayout posts={posts} initialFilter={initialFilter} />
+  </div>
+</BaseLayout>

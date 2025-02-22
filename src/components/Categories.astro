@@ -39,27 +39,9 @@ const categories = [
       link.addEventListener("click", (e) => {
         e.preventDefault();
         const category =
-          (e.currentTarget as HTMLAnchorElement).dataset.category || "";
-
-        // URLを更新
-        const href = (e.currentTarget as HTMLAnchorElement).href;
-        window.history.pushState(null, "", href);
-
-        // スムーズスクロールを開始
-        window.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-
-        // スクロールアニメーションが開始してから少し遅れてフィルタリングを実行
-        setTimeout(() => {
-          // カスタムイベントを発火
-          window.dispatchEvent(
-            new CustomEvent("timelineFilter", {
-              detail: { filter: category },
-            })
-          );
-        }, 300); // スクロールが始まってからフィルタリングを実行
+          (e.currentTarget as HTMLElement).dataset.category || "";
+        const href = `/categories/${category}`;
+        window.location.href = href;
       });
     });
   }
