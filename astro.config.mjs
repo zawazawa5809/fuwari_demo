@@ -6,7 +6,8 @@ import react from "@astrojs/react";
 import compress from "astro-compress";
 
 export default defineConfig({
-  site: "https://example.com",
+  site: "https://[ユーザー名].github.io",
+  base: "/[リポジトリ名]",
 
   integrations: [
     mdx(),
