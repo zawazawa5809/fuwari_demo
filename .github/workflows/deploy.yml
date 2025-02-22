@@ -1,12 +1,13 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Trigger the workflow every time you push to the `main` branch
+  # `main`ブランチにプッシュするたびにワークフローを実行します。
   push:
     branches: [main]
-  # Allows you to run this workflow manually from the Actions tab on GitHub.
+  # このワークフローをGitHubのActionsタブから手動で実行できるようにします。
   workflow_dispatch:
 
+# このジョブがリポジトリをクローンし、ページデプロイメントを作成することを許可します。
 permissions:
   contents: read
   pages: write
@@ -18,23 +19,10 @@ jobs:
     steps:
       - name: Checkout your repository using git
         uses: actions/checkout@v4
-      - name: Setup PNPM
-        uses: pnpm/action-setup@v2
+      - name: Install, build, and upload your site
+        uses: withastro/action@v3
         with:
-          version: latest
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-          cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install
-      - name: Build site
-        run: pnpm build
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: dist
+          package-manager: pnpm@latest
 
   deploy:
     needs: build
