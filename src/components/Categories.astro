@@ -19,11 +19,11 @@ const categories = [
     {
       categories.map((category) => (
         <a
-          href={`/categories/${category.toLowerCase()}`}
+          href={`/categories/${category!.toLowerCase()}`}
           class="category-link inline-block px-3 py-1 text-sm rounded-full 
           bg-gray-200 hover:bg-primary-100 dark:bg-gray-700 dark:hover:bg-gray-600 
           transition-colors duration-200"
-          data-category={category.toLowerCase()}
+          data-category={category!.toLowerCase()}
         >
           {category}
         </a>

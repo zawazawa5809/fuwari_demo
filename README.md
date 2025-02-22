@@ -1,48 +1,117 @@
-# Astro Starter Kit: Basics
+# Fuwari Demo
 
-```sh
-npm create astro@latest -- --template basics
-```
+Fuwari Demo is a lightweight and fast blog built using [Astro](https://astro.build). This project demonstrates a modern approach to static site generation with an emphasis on performance, simplicity, and ease of use.
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/astro/tree/latest/examples/basics)
-[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/astro/tree/latest/examples/basics)
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/withastro/astro?devcontainer_path=.devcontainer/basics/devcontainer.json)
+## Features
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+- **Astro-based Architecture**: Leverages Astro for fast, optimized static site generation.
+- **Tailwind CSS**: Built-in styling with a utility-first CSS framework.
+- **Sample Content**: Includes a range of sample posts, categories, and tags to showcase the blog layout and features.
+- **Component-driven Design**: Structured with reusable Astro and React components.
+- **Dynamic Filtering**: Category and tag filtering powered by custom events.
+- **Firebase Integration**: (Optional) Firebase configuration for extended features (located in `lib/firebase.ts`).
 
-![just-the-basics](https://github.com/withastro/astro/assets/2244813/a0a5533c-a856-4198-8470-2d67b1d7c554)
-
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
+## Project Structure
 
 ```text
-/
-├── public/
-│   └── favicon.svg
+├── api/                   # API routes
+├── astro.config.mjs       # Astro configuration file
+├── package.json           # Project metadata and scripts
+├── pnpm-lock.yaml         # Dependency lock file
+├── public/                # Static assets (images, favicon, etc.)
+├── README.md              # This file
+├── scripts/               # Utility scripts (e.g., generate-sample-posts.js)
 ├── src/
-│   ├── layouts/
-│   │   └── Layout.astro
-│   └── pages/
-│       └── index.astro
-└── package.json
+│   ├── assets/           # Static assets for components
+│   ├── components/       # Reusable UI components (Header, Banner, PostList, Timeline, etc.)
+│   ├── config.ts         # Site configuration
+│   ├── content/          # Markdown posts and content files
+│   ├── layouts/          # Layout components (BaseLayout, BlogPost, TimelineLayout, etc.)
+│   ├── pages/            # Page components (home, posts, archive, categories, tags, etc.)
+│   ├── lib/              # Library files (Firebase integration, etc.)
+│   ├── styles/           # Global styles
+│   └── utils/            # Utility functions (e.g., Table of Contents generation)
+├── tailwind.config.mjs    # Tailwind CSS configuration
+└── tsconfig.json          # TypeScript configuration
 ```
 
-To learn more about the folder structure of an Astro project, refer to [our guide on project structure](https://docs.astro.build/en/basics/project-structure/).
+## Getting Started
 
-## 🧞 Commands
+### Prerequisites
 
-All commands are run from the root of the project, from a terminal:
+- Node.js (version >= 16 recommended)
+- pnpm
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+### Installation
 
-## 👀 Want to learn more?
+1. Clone the repository:
 
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+   ```sh
+   git clone https://your-repository-url.git
+   cd fuwari_demo
+   ```
+
+2. Install dependencies:
+
+   ```sh
+   pnpm install
+   ```
+
+### Development
+
+Start the development server:
+
+```sh
+pnpm run dev
+```
+
+This will run the Astro dev server, and you can view the blog at [http://localhost:3000](http://localhost:3000) (or the port specified by Astro).
+
+### Generating Sample Posts
+
+To generate sample posts for testing the timeline layout and content structure, run:
+
+```sh
+pnpm run generate-samples
+```
+
+### Build and Preview
+
+To build the project for production:
+
+```sh
+pnpm run build
+```
+
+To preview the production build locally:
+
+```sh
+pnpm run preview
+```
+
+## Deployment
+
+Fuwari Demo can be deployed to any static hosting service. Refer to the [Astro Deployment Guide](https://docs.astro.build/en/guides/deploy/) for more information.
+
+## Customization
+
+- **Content**: Add or modify posts in `src/content/posts/` using Markdown. The frontmatter schema is defined in `src/content/config.ts`.
+- **Layouts and Components**: Customize the look and feel by editing components in `src/components/` and layouts in `src/layouts/`.
+- **Styling**: The project uses Tailwind CSS. Update or extend styles in `tailwind.config.mjs` and `src/styles/global.css`.
+
+## Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request for improvements and bug fixes.
+
+## License
+
+This project is licensed under the MIT License.
+
+## Acknowledgements
+
+- [Astro](https://astro.build) for the amazing static site framework.
+- [Tailwind CSS](https://tailwindcss.com) for utility-first styling.
+
+---
+
+_This README was generated to provide an overview and guide for the Fuwari Demo project._
