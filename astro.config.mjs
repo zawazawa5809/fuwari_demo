@@ -6,6 +6,7 @@ import react from "@astrojs/react";
 import compress from "astro-compress";
 
 export default defineConfig({
+  output: "static",
   site: "https://zawazawa5809.github.io",
   base: "/fuwari_demo",
 
