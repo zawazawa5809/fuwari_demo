@@ -81,10 +81,4 @@ export default defineConfig({
       },
     ],
   },
-
-  output: "static",
-  assets: true,
-  build: {
-    assets: "assets",
-  },
 });
