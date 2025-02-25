@@ -4,9 +4,10 @@ import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
 import react from "@astrojs/react";
 import compress from "astro-compress";
+import node from "@astrojs/node"; // Add this import
 
 export default defineConfig({
-  output: "static",
+  output: "server", // Change this to 'server' if it's not already
   site: "https://zawazawa5809.github.io",
   base: "/fuwari_demo",
 
@@ -23,6 +24,10 @@ export default defineConfig({
       SVG: true,
     }),
   ],
+
+  adapter: node({
+    mode: "standalone", // You can also use 'middleware' depending on your needs
+  }),
 
   markdown: {
     shikiConfig: {
