@@ -1,4 +1,6 @@
 ---
+import { getAssetPath } from "../utils/paths";
+
 interface Props {
   isHome?: boolean;
 }
@@ -6,24 +8,27 @@ interface Props {
 const { isHome = false } = Astro.props;
 ---
 
-<div
-  class="banner-container w-full"
-  transition:persist
-  transition:name="banner"
->
-  <div class="banner-image-wrapper">
-    <img
-      src="/images/banner.jpg"
-      alt="Banner"
-      class="banner-image"
-      width="1920"
-      height="400"
-      loading="eager"
-      decoding="sync"
-      fetchpriority="high"
-    />
+<div class="banner">
+  <img src={getAssetPath("/images/banner.jpg")} alt="Banner" />
+  <div
+    class="banner-container w-full"
+    transition:persist
+    transition:name="banner"
+  >
+    <div class="banner-image-wrapper">
+      <img
+        src="/images/banner.jpg"
+        alt="Banner"
+        class="banner-image"
+        width="1920"
+        height="400"
+        loading="eager"
+        decoding="sync"
+        fetchpriority="high"
+      />
+    </div>
+    <div class="skeleton-overlay" transition:persist></div>
   </div>
-  <div class="skeleton-overlay" transition:persist></div>
 </div>
 
 <style>

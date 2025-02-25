@@ -1,4 +1,5 @@
 ---
+import Layout from "../layouts/Layout.astro";
 // ログインページの認証機能を無効化
 ---
 
@@ -9,3 +10,25 @@
     <a href="/">ホームに戻る</a>
   </main>
 </Layout>
+
+<style>
+  main {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+  }
+  h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+  p {
+    margin-bottom: 1rem;
+  }
+  a {
+    color: var(--color-primary);
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+</style>

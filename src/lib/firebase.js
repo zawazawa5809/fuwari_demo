@@ -1,5 +1,5 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import { initializeApp, getApps } from "firebase/app";
+import { getAuth, GoogleAuthProvider } from "firebase/auth";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -22,7 +22,7 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase only in browser environment or when variables are properly set
-let app, auth;
+let app, auth, googleProvider;
 
 // Check if we have the necessary configuration to initialize Firebase
 const hasValidConfig =
@@ -31,8 +31,12 @@ const hasValidConfig =
 // Only initialize if we have valid config and are in a browser OR specifically handling server-side
 if (hasValidConfig) {
   try {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
+    if (typeof window !== "undefined" && !getApps().length) {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      googleProvider = new GoogleAuthProvider();
+      // ...other initializations
+    }
   } catch (error) {
     console.error("Firebase initialization error:", error);
   }
@@ -45,8 +49,7 @@ if (hasValidConfig) {
 // Firebase初期化コードをコメントアウトまたは削除
 
 // Firebaseを使わない空のモックを提供
-export const auth = null;
-export const app = null;
+export { app, auth, googleProvider };
 
 // 必要に応じて他のFirebaseサービスも同様に
 export const db = null;

@@ -1,18 +1,26 @@
 ---
 import { getCollection } from "astro:content";
 
-// カテゴリーのインデックスページのみを処理
 export async function getStaticPaths() {
-  return [{ params: { type: "categories", topic: "index" } }];
+  const posts = await getCollection("posts");
+
+  // Get all unique categories
+  const categories = [...new Set(posts.map((post) => post.data.category))];
+
+  return [
+    // Categories index redirect
+    {
+      params: { type: "categories", topic: "index" },
+      props: { redirect: "/categories/" },
+    },
+    // Add other known types if needed
+    ...categories.map((category) => ({
+      params: { type: "categories", topic: category.toLowerCase() },
+      props: { redirect: `/categories/${category.toLowerCase()}/` },
+    })),
+  ];
 }
 
-// インデックスページへのリダイレクト処理
-const { type, topic } = Astro.params;
-
-if (topic === "index") {
-  return Astro.redirect(`/${type}/`);
-}
-
-// その他のパスは404へリダイレクト
-return Astro.redirect("/404");
+const { redirect } = Astro.props;
+return Astro.redirect(redirect);
 ---

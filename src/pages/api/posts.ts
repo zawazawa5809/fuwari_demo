@@ -1,29 +1,28 @@
 import { getCollection } from "astro:content";
 import type { APIRoute } from "astro";
-import TimelineLayout from "../../layouts/TimelineLayout.astro";
 
-export const GET: APIRoute = async ({ url }) => {
-  const tag = url.searchParams.get("tag")?.toLowerCase();
+export async function getStaticPaths() {
   const posts = await getCollection("posts");
+  return [{ params: { tag: undefined }, props: { posts } }];
+}
 
-  // タグでフィルタリング
-  const filteredPosts = tag
-    ? posts.filter((post) =>
-        post.data.tags?.some((t) => t.toLowerCase() === tag)
-      )
-    : posts;
+export const GET: APIRoute = async ({ props }) => {
+  if (!props?.posts) {
+    return new Response(JSON.stringify([]), {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
   // 日付でソート
-  const sortedPosts = filteredPosts.sort(
+  const sortedPosts = [...props.posts].sort(
     (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
   );
 
-  // TimelineLayoutコンポーネントをレンダリング
-  const timeline = await TimelineLayout({ posts: sortedPosts });
-
-  return new Response(timeline.toString(), {
+  return new Response(JSON.stringify(sortedPosts), {
     headers: {
-      "Content-Type": "text/html",
+      "Content-Type": "application/json",
     },
   });
 };

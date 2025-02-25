@@ -2,7 +2,15 @@ import { getCollection } from "astro:content";
 import type { APIRoute } from "astro";
 import TimelineLayout from "../../../layouts/TimelineLayout.astro";
 
-export const prerender = false;
+export async function getStaticPaths() {
+  const posts = await getCollection("posts");
+  const tags = [...new Set(posts.flatMap((post) => post.data.tags || []))];
+
+  return [
+    { params: { tag: "all" } },
+    ...tags.map((tag) => ({ params: { tag: tag.toLowerCase() } })),
+  ];
+}
 
 export const GET: APIRoute = async ({ params }) => {
   try {

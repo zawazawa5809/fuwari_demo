@@ -4,13 +4,14 @@ import sitemap from "@astrojs/sitemap";
 import tailwind from "@astrojs/tailwind";
 import react from "@astrojs/react";
 import compress from "astro-compress";
-import node from "@astrojs/node"; // Add this import
+
+// 環境に応じてbaseを設定
+const base = process.env.NODE_ENV === "production" ? "/fuwari_demo" : "";
 
 export default defineConfig({
   site: "https://zawazawa5809.github.io",
-  base: "/fuwari_demo",
-  output: "server", // Change this to 'server' if it's not already
-
+  base,
+  output: "static",
   integrations: [
     mdx(),
     sitemap(),
@@ -24,10 +25,6 @@ export default defineConfig({
       SVG: true,
     }),
   ],
-
-  adapter: node({
-    mode: "standalone", // You can also use 'middleware' depending on your needs
-  }),
 
   markdown: {
     shikiConfig: {

@@ -2,6 +2,7 @@
 import { SITE_CONFIG } from "../config";
 import ThemeToggle from "./ThemeToggle";
 import LoginButton from "./LoginButton";
+import { getAssetPath } from "../utils/paths";
 ---
 
 <header class="header-inner" transition:persist>
@@ -11,9 +12,9 @@ import LoginButton from "./LoginButton";
         {SITE_CONFIG.title}
       </a>
       <nav class="flex items-center gap-6" transition:persist>
-        <a href="/" class="nav-link">Home</a>
-        <a href="/archive" class="nav-link">Archive</a>
-        <a href="/about" class="nav-link">About</a>
+        <a href={getAssetPath("/")}>Home</a>
+        <a href={getAssetPath("/archive")}>Archive</a>
+        <a href={getAssetPath("/about")}>About</a>
         <a href={SITE_CONFIG.social.github} target="_blank" class="nav-link">
           GitHub
         </a>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- Change from: -->
+    <!-- <link rel="icon" href="/favicon.ico" /> -->
+    <!-- To: -->
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+
+    <!-- Other meta tags -->
+    <title>Fuwari Demo</title>
+
+    <!-- Make sure static assets use %PUBLIC_URL% for proper path resolution -->
+    <link rel="stylesheet" href="%PUBLIC_URL%/css/styles.css" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <!-- Scripts that reference local assets should use %PUBLIC_URL% -->
+    <script src="%PUBLIC_URL%/js/vendors.js"></script>
+  </body>
+</html>

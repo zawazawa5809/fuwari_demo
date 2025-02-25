@@ -1,23 +1,27 @@
 ---
-import { getCollection } from 'astro:content';
-import PostLayout from '../../layouts/PostLayout.astro';
-import { generateToc } from '../../utils/toc';
+import { getCollection } from "astro:content";
+import PostLayout from "../../layouts/PostLayout.astro";
+import { generateToc } from "../../utils/toc";
 
 export async function getStaticPaths() {
-  const posts = await getCollection('posts');
-  return posts.map((post) => ({
-    params: { slug: post.slug },
-    props: { post },
-  }));
+  const posts = await getCollection("posts");
+  return posts.map((post) => {
+    // スラッグからフォルダパスを除去し、純粋なスラッグ部分のみを使用
+    const slug = post.slug.split("/").pop() || post.slug;
+    return {
+      params: { slug },
+      props: { post },
+    };
+  });
 }
 
 const { post } = Astro.props;
 const { Content, headings } = await post.render();
 
-const toc = headings.map(heading => ({
+const toc = headings.map((heading) => ({
   id: heading.slug,
   text: heading.text,
-  depth: heading.depth
+  depth: heading.depth,
 }));
 ---
 
