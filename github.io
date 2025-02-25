@@ -1,3 +1,4 @@
+// This file should be renamed to astro.config.mjs
 import { defineConfig } from 'astro/config'
 
 export default defineConfig({

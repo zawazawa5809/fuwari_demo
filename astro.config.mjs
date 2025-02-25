@@ -7,9 +7,9 @@ import compress from "astro-compress";
 import node from "@astrojs/node"; // Add this import
 
 export default defineConfig({
-  output: "server", // Change this to 'server' if it's not already
   site: "https://zawazawa5809.github.io",
   base: "/fuwari_demo",
+  output: "server", // Change this to 'server' if it's not already
 
   integrations: [
     mdx(),
